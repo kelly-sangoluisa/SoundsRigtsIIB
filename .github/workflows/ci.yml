@@ -1,0 +1,15 @@
+name: CI - Pull Request Validation
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  validate_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        uses: Slashgear/action-check-pr-title@v4.3.0
+        with:
+          regexp: '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert|release|hotfix)\s*:\s*.{1,100}$'
+          helpMessage: 'Formato requerido: "tipo: descripción" o "tipo : descripción". Ejemplo: "feat: resolve token problem"'
