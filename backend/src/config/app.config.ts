@@ -1,3 +1,5 @@
+import circuitBreakerConfig from './circuit-breaker.config';
+
 export default () => ({
   port: parseInt(process.env.PORT, 10) || 3000,
   database: {
@@ -11,4 +13,5 @@ export default () => ({
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRATION || '7d',
   },
+  ...circuitBreakerConfig(),
 });
