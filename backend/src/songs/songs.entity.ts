@@ -37,6 +37,18 @@ export class Song {
   })
   status: SongStatus;
 
+  @Column({ name: 'file_url', length: 500, nullable: true })
+  fileUrl: string;
+
+  @Column({ nullable: true })
+  duration: number;
+
+  @Column({ type: 'text', nullable: true })
+  description: string;
+
+  @Column({ length: 255, nullable: true })
+  tags: string;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

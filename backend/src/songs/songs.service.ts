@@ -12,6 +12,7 @@ export class SongsService {
       artistId: userId,
       status: SongStatus.FOR_SALE,
     };
+    
     return this.songsRepository.createSong(newSong);
   }
 
