@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthService } from '../services/authService';
 import { LoginCredentials } from '../types';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 export const useLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
