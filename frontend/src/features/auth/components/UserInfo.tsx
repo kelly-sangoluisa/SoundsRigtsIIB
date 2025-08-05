@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 export const UserInfo = () => {
   const { user, logout } = useAuth();
