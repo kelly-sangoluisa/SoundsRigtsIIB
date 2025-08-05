@@ -1,14 +1,27 @@
-import { tokenStorage } from '../utils/tokenStorage';
+// Configuración de la API
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
 
-// Configuración base de la API
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// Almacenamiento del token
+export const tokenStorage = {
+  get: (): string | null => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('auth_token');
+    }
+    return null;
+  },
+  set: (token: string): void => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', token);
+    }
+  },
+  remove: (): void => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+    }
+  },
+};
 
-// Tipos para las opciones de la API
-export interface ApiOptions extends RequestInit {
-  requireAuth?: boolean;
-  timeout?: number;
-}
-
+// Interfaces
 export interface ApiResponse<T = any> {
   data?: T;
   message?: string;
@@ -25,12 +38,18 @@ export interface ApiResponse<T = any> {
   };
 }
 
-// Errores personalizados
+export interface ApiOptions extends Omit<RequestInit, 'headers'> {
+  requireAuth?: boolean;
+  timeout?: number;
+  headers?: Record<string, string>;
+}
+
+// Clases de error personalizadas
 export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public response?: any
+    public data?: any
   ) {
     super(message);
     this.name = 'ApiError';
@@ -38,7 +57,7 @@ export class ApiError extends Error {
 }
 
 export class NetworkError extends Error {
-  constructor(message: string = 'Error de conexión') {
+  constructor(message: string = 'Error de red') {
     super(message);
     this.name = 'NetworkError';
   }
@@ -51,29 +70,18 @@ export class TimeoutError extends Error {
   }
 }
 
-// Función principal para llamadas a la API
-export async function fetchApi<T = any>(
-  path: string,
-  options: ApiOptions = {}
-): Promise<ApiResponse<T>> {
-  const {
-    requireAuth = true,
-    timeout = 10000,
-    headers = {},
-    ...fetchOptions
-  } = options;
-
-  // Construir URL completa
+// Funciones helper
+const buildApiUrl = (path: string): string => {
   const urlPath = path.startsWith('/') ? path : `/${path}`;
-  const url = `${API_BASE_URL}${urlPath}`;
+  return `${API_BASE_URL}${urlPath}`;
+};
 
-  // Headers por defecto
+const buildHeaders = (requireAuth: boolean, additionalHeaders: Record<string, string>): Record<string, string> => {
   const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
 
-  // Agregar token de autenticación si es requerido
   if (requireAuth) {
     const token = tokenStorage.get();
     if (token) {
@@ -83,29 +91,66 @@ export async function fetchApi<T = any>(
     }
   }
 
-  // Combinar headers
-  const finalHeaders = {
-    ...defaultHeaders,
-    ...headers,
-  };
+  return { ...defaultHeaders, ...additionalHeaders };
+};
 
-  // Configuración final de fetch
-  const fetchConfig: RequestInit = {
+const prepareFetchConfig = (options: ApiOptions, headers: Record<string, string>): RequestInit => {
+  const { requireAuth, timeout, headers: _, ...fetchOptions } = options;
+  
+  const config: RequestInit = {
     ...fetchOptions,
-    headers: finalHeaders,
+    headers,
   };
 
-  // Agregar body si es necesario y no es GET
-  if (fetchConfig.method !== 'GET' && fetchConfig.body && typeof fetchConfig.body === 'object') {
-    fetchConfig.body = JSON.stringify(fetchConfig.body);
+  if (config.method !== 'GET' && config.body && typeof config.body === 'object') {
+    config.body = JSON.stringify(config.body);
   }
 
-  // Crear AbortController para timeout
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  return config;
+};
+
+const handleResponseErrors = (response: Response, responseData: any): void => {
+  if (response.status === 401) {
+    tokenStorage.remove();
+    throw new ApiError('Sesión expirada. Por favor, inicia sesión nuevamente.', 401, responseData);
+  }
+
+  if (response.status === 403) {
+    throw new ApiError('No tienes permisos para realizar esta acción.', 403, responseData);
+  }
+
+  if (response.status === 404) {
+    throw new ApiError('Recurso no encontrado.', 404, responseData);
+  }
+
+  if (response.status >= 500) {
+    throw new ApiError('Error interno del servidor. Inténtalo más tarde.', response.status, responseData);
+  }
+
+  if (!response.ok) {
+    throw new ApiError(
+      responseData?.message || responseData?.error || 'Error en la operación',
+      response.status,
+      responseData
+    );
+  }
+};
+
+// Función principal de API (optimizada)
+export async function fetchApi<T = any>(
+  path: string,
+  options: ApiOptions = {}
+): Promise<ApiResponse<T>> {
+  const { timeout = 10000, headers = {}, requireAuth = true } = options;
 
   try {
-    // Realizar la petición
+    const url = buildApiUrl(path);
+    const finalHeaders = buildHeaders(requireAuth, headers);
+    const fetchConfig = prepareFetchConfig(options, finalHeaders);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
     const response = await fetch(url, {
       ...fetchConfig,
       signal: controller.signal,
@@ -113,155 +158,91 @@ export async function fetchApi<T = any>(
 
     clearTimeout(timeoutId);
 
-    // Intentar parsear la respuesta como JSON
-    let responseData: any;
+    // Parsear respuesta
     const contentType = response.headers.get('content-type');
-    
-    if (contentType && contentType.includes('application/json')) {
-      responseData = await response.json();
-    } else {
-      responseData = await response.text();
-    }
+    const responseData = contentType?.includes('application/json') 
+      ? await response.json() 
+      : await response.text();
 
-    // Construir respuesta estandarizada
+    // Construir respuesta
     const apiResponse: ApiResponse<T> = {
       data: responseData,
       success: response.ok,
       status: response.status,
       message: responseData?.message || (response.ok ? 'Operación exitosa' : 'Error en la operación'),
       error: response.ok ? undefined : (responseData?.error || responseData?.message || 'Error desconocido'),
+      pagination: responseData?.pagination,
     };
 
-    // Si la respuesta no es exitosa, lanzar error
-    if (!response.ok) {
-      // Manejar errores específicos
-      if (response.status === 401) {
-        // Token expirado o inválido
-        tokenStorage.remove();
-        throw new ApiError('Sesión expirada. Por favor, inicia sesión nuevamente.', 401, responseData);
-      }
-
-      if (response.status === 403) {
-        throw new ApiError('No tienes permisos para realizar esta acción.', 403, responseData);
-      }
-
-      if (response.status === 404) {
-        throw new ApiError('Recurso no encontrado.', 404, responseData);
-      }
-
-      if (response.status === 429) {
-        throw new ApiError('Demasiadas peticiones. Intenta de nuevo más tarde.', 429, responseData);
-      }
-
-      if (response.status >= 500) {
-        throw new ApiError('Error interno del servidor. Intenta de nuevo más tarde.', response.status, responseData);
-      }
-
-      // Error genérico del cliente
-      throw new ApiError(
-        apiResponse.error || 'Error en la petición',
-        response.status,
-        responseData
-      );
-    }
-
+    handleResponseErrors(response, responseData);
     return apiResponse;
 
   } catch (error: any) {
-    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new TimeoutError(`Timeout después de ${timeout}ms`);
+    }
 
-    // Manejar diferentes tipos de errores
     if (error instanceof ApiError) {
       throw error;
     }
 
-    if (error && error.name === 'AbortError') {
-      throw new TimeoutError(`La petición tardó más de ${timeout}ms en responder`);
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new NetworkError('Error de conexión de red');
     }
 
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new NetworkError('Error de conexión. Verifica tu conexión a internet.');
-    }
-
-    // Error genérico
-    throw new ApiError(
-      (error && error.message) || 'Error inesperado en la petición',
-      0,
-      error
-    );
+    console.error('API Error:', error);
+    return {
+      data: undefined,
+      success: false,
+      status: error.status || 500,
+      message: 'Error en la operación',
+      error: error.message || 'Error desconocido',
+    };
   }
 }
 
 // Métodos de conveniencia
 export const api = {
-  // GET
   get: <T = any>(path: string, options?: Omit<ApiOptions, 'method'>) =>
     fetchApi<T>(path, { ...options, method: 'GET' }),
 
-  // POST
   post: <T = any>(path: string, data?: any, options?: Omit<ApiOptions, 'method' | 'body'>) =>
     fetchApi<T>(path, { ...options, method: 'POST', body: data }),
 
-  // PUT
   put: <T = any>(path: string, data?: any, options?: Omit<ApiOptions, 'method' | 'body'>) =>
     fetchApi<T>(path, { ...options, method: 'PUT', body: data }),
 
-  // PATCH
   patch: <T = any>(path: string, data?: any, options?: Omit<ApiOptions, 'method' | 'body'>) =>
     fetchApi<T>(path, { ...options, method: 'PATCH', body: data }),
 
-  // DELETE
   delete: <T = any>(path: string, options?: Omit<ApiOptions, 'method'>) =>
     fetchApi<T>(path, { ...options, method: 'DELETE' }),
 
-  // Upload de archivos
-  upload: <T = any>(path: string, file: File | FormData, options?: Omit<ApiOptions, 'method' | 'body'>) => {
-    const formData = file instanceof FormData ? file : (() => {
-      const fd = new FormData();
-      fd.append('file', file);
-      return fd;
-    })();
-
-    return fetchApi<T>(path, {
+  upload: <T = any>(path: string, formData: FormData, options?: Omit<ApiOptions, 'method' | 'body' | 'headers'>) =>
+    fetchApi<T>(path, {
       ...options,
       method: 'POST',
       body: formData,
-    });
-  },
+      headers: {}, // FormData establece automáticamente Content-Type
+    }),
 };
 
-// Tipos para interceptores
-type RequestInterceptor = (config: ApiOptions & { url: string }) => ApiOptions & { url: string };
-type ResponseInterceptor = (response: ApiResponse) => ApiResponse;
-type ErrorInterceptor = (error: Error) => Error;
-
-// Interceptores para peticiones y respuestas (para logging, etc.)
-export const apiInterceptors = {
-  request: [] as RequestInterceptor[],
-  response: [] as ResponseInterceptor[],
-  error: [] as ErrorInterceptor[],
-
-  addRequestInterceptor: (interceptor: RequestInterceptor) => {
-    apiInterceptors.request.push(interceptor);
+// Interceptores (para logging, transformaciones, etc.)
+export const interceptors = {
+  request: {
+    use: (fn: (config: ApiOptions) => ApiOptions | Promise<ApiOptions>) => {
+      // Implementar interceptor de request
+      console.log('Request interceptor registered:', fn);
+    },
   },
-
-  addResponseInterceptor: (interceptor: ResponseInterceptor) => {
-    apiInterceptors.response.push(interceptor);
-  },
-
-  addErrorInterceptor: (interceptor: ErrorInterceptor) => {
-    apiInterceptors.error.push(interceptor);
-  },
-};
-
-// Configuración global
-export const apiConfig = {
-  setBaseUrl: (url: string) => {
-    (global as any).API_BASE_URL = url;
-  },
-  
-  setDefaultTimeout: (timeout: number) => {
-    (global as any).DEFAULT_TIMEOUT = timeout;
+  response: {
+    use: (
+      onFulfilled?: (response: ApiResponse) => ApiResponse | Promise<ApiResponse>,
+      onRejected?: (error: any) => any
+    ) => {
+      // Implementar interceptor de response
+      console.log('Response interceptor registered:', { onFulfilled, onRejected });
+    },
   },
 };
 

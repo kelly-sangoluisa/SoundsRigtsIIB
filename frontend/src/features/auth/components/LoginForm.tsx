@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useLogin } from '../hooks/useLogin';
+import { useLogin } from '@/shared/hooks/useLogin';
 
 export const LoginForm = () => {
   const [email, setEmail] = useState('');

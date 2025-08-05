@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SongFilters } from '../types';
+import { SongFilters, SongGenre, SongStatus } from '../types';
 
 interface SongsFiltersProps {
   onFiltersChange: (filters: SongFilters) => void;
@@ -42,7 +42,7 @@ export const SongsFilters = ({ onFiltersChange, currentFilters }: SongsFiltersPr
   const handleGenreChange = (genre: string) => {
     const newFilters = { 
       ...localFilters, 
-      genre: genre === 'Todos' ? undefined : genre 
+      genre: genre === 'Todos' ? undefined : genre as SongGenre
     };
     setLocalFilters(newFilters);
     onFiltersChange(newFilters);
@@ -51,7 +51,7 @@ export const SongsFilters = ({ onFiltersChange, currentFilters }: SongsFiltersPr
   const handleStatusChange = (status: string) => {
     const newFilters = { 
       ...localFilters, 
-      status: status as 'published' | 'draft' | 'archived' | undefined || undefined 
+      status: status === 'Todos' ? undefined : status as SongStatus
     };
     setLocalFilters(newFilters);
     onFiltersChange(newFilters);

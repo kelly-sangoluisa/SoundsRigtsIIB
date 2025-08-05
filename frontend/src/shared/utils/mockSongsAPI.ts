@@ -397,6 +397,29 @@ export const mockSongsAPI = {
       expiresAt,
       message: 'Solicitud de compra enviada exitosamente. El artista tiene 48 horas para responder.'
     };
+  },
+
+  // GET /songs/:id - Obtener canción por ID (alias para getSongById)
+  getSong: async (id: string, artistId: string = '1'): Promise<Song | null> => {
+    return mockSongsAPI.getSongById(id, artistId);
+  },
+
+  // PATCH /songs/:id/status - Actualizar estado de canción
+  updateSongStatus: async (id: string, status: Song['status'], artistId: string = '1'): Promise<Song> => {
+    await delay(300);
+    
+    const songIndex = mockSongs.findIndex(song => song.id === id && song.artistId === artistId);
+    if (songIndex === -1) {
+      throw new Error('Canción no encontrada');
+    }
+    
+    mockSongs[songIndex] = {
+      ...mockSongs[songIndex],
+      status,
+      updatedAt: new Date().toISOString()
+    };
+    
+    return mockSongs[songIndex];
   }
 };
 
@@ -431,4 +454,8 @@ export const getStatusColor = (status: Song['status']): string => {
     for_sale: 'bg-purple-100 text-purple-800'
   };
   return colors[status];
+};
+
+export const getStatusText = (status: Song['status']): string => {
+  return getStatusLabel(status);
 };

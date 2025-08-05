@@ -35,7 +35,7 @@ export class SongsService {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const artistId = payload.id || payload.sub;
         
-        return await mockSongsAPI.getMySongs(artistId, filters);
+        return await mockSongsAPI.getMySongs(artistId);
       }
 
       // API real (cuando esté disponible)
