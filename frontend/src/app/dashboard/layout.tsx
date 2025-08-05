@@ -4,6 +4,7 @@ import { useAuth } from '@/shared/hooks/useAuth';
 import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { UserProfileHeader } from '@/features/user';
 
 interface DashboardLayoutProps {
   readonly children: ReactNode;
@@ -53,22 +54,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Usuario y logout */}
             <div className="flex items-center space-x-4">
               {user && (
-                <div className="flex items-center space-x-3">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {user.name || user.email}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {user.role}
-                    </p>
-                  </div>
+                <>
+                  <UserProfileHeader userId={user.id} />
                   <button
                     onClick={logout}
                     className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                   >
                     Cerrar Sesión
                   </button>
-                </div>
+                </>
               )}
             </div>
           </div>
