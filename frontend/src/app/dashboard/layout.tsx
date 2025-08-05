@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 interface DashboardLayoutProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
@@ -27,11 +27,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     ...(user?.role === 'artist' ? [
       { name: 'Mis Canciones', href: '/dashboard/artist/songs', icon: '🎵' },
       { name: 'Licencias Vendidas', href: '/dashboard/artist/licenses', icon: '📄' },
+      { name: 'Chat', href: '/dashboard/artist/chats', icon: '💬' },
     ] : []),
     // Rutas específicas para compradores
     ...(user?.role === 'buyer' ? [
       { name: 'Explorar Música', href: '/dashboard/buyer/explore', icon: '🔍' },
       { name: 'Mis Licencias', href: '/dashboard/buyer/licenses', icon: '📋' },
+      { name: 'Chat', href: '/dashboard/buyer/chats', icon: '💬' },
     ] : []),
     { name: 'Configuración', href: '/dashboard/settings', icon: '⚙️' },
   ];

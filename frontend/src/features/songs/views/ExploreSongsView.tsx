@@ -6,6 +6,7 @@ import { useAvailableSongs } from '../hooks/useAvailableSongs';
 import { BuyerFilters } from '../components/BuyerFilters';
 import { AvailableSongsList } from '../components/AvailableSongsList';
 import { PurchaseModal } from '../components/PurchaseModal';
+import { ChatCreatedNotification } from '@/features/chat/components/ChatCreatedNotification';
 import { Song } from '../types';
 
 export const ExploreSongsView = () => {
@@ -24,6 +25,15 @@ export const ExploreSongsView = () => {
 
   const [selectedSongForPurchase, setSelectedSongForPurchase] = useState<Song | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [chatNotification, setChatNotification] = useState<{
+    isVisible: boolean;
+    chatId: string;
+    songTitle: string;
+  }>({
+    isVisible: false,
+    chatId: '',
+    songTitle: ''
+  });
 
   const handlePurchase = (song: Song) => {
     setSelectedSongForPurchase(song);
@@ -33,6 +43,18 @@ export const ExploreSongsView = () => {
     setSuccessMessage(message);
     refreshSongs(); // Refrescar para actualizar estados
     setTimeout(() => setSuccessMessage(''), 5000); // Limpiar mensaje después de 5 segundos
+  };
+
+  const handleChatCreated = (chatId: string, songTitle: string) => {
+    setChatNotification({
+      isVisible: true,
+      chatId,
+      songTitle
+    });
+    // Auto-ocultar después de 10 segundos
+    setTimeout(() => {
+      setChatNotification(prev => ({ ...prev, isVisible: false }));
+    }, 10000);
   };
 
   const handleRefresh = () => {
@@ -212,8 +234,17 @@ export const ExploreSongsView = () => {
           isOpen={!!selectedSongForPurchase}
           onClose={() => setSelectedSongForPurchase(null)}
           onSuccess={handlePurchaseSuccess}
+          onChatCreated={handleChatCreated}
         />
       )}
+
+      {/* Notificación de chat creado */}
+      <ChatCreatedNotification
+        isVisible={chatNotification.isVisible}
+        chatId={chatNotification.chatId}
+        songTitle={chatNotification.songTitle}
+        onClose={() => setChatNotification(prev => ({ ...prev, isVisible: false }))}
+      />
 
       {/* Información del usuario actual */}
       {user && (

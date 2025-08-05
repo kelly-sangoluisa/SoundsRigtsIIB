@@ -4,16 +4,19 @@ import { useState } from 'react';
 import { Song } from '../types';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { mockSongsAPI } from '@/shared/utils/mockSongsAPI';
+import { useCreateChat } from '@/features/chat/hooks/useCreateChat';
 
 interface PurchaseModalProps {
   song: Song;
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (message: string) => void;
+  onChatCreated?: (chatId: string, songTitle: string) => void;
 }
 
-export const PurchaseModal = ({ song, isOpen, onClose, onSuccess }: PurchaseModalProps) => {
+export const PurchaseModal = ({ song, isOpen, onClose, onSuccess, onChatCreated }: PurchaseModalProps) => {
   const { user } = useAuth();
+  const { createChat } = useCreateChat();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     message: '',
@@ -33,6 +36,7 @@ export const PurchaseModal = ({ song, isOpen, onClose, onSuccess }: PurchaseModa
     setError('');
 
     try {
+      // 1. Realizar la compra
       const response = await mockSongsAPI.purchaseSong({
         songId: song.id,
         buyerMessage: formData.message,
@@ -41,6 +45,17 @@ export const PurchaseModal = ({ song, isOpen, onClose, onSuccess }: PurchaseModa
         buyerName: user.name || user.email,
         buyerEmail: user.email
       });
+
+      // 2. Crear chat automáticamente (Task 14)
+      try {
+        const newChat = await createChat(song.id, user.id, song.artistId || 'user_artist_1');
+        if (newChat && onChatCreated) {
+          onChatCreated(newChat.id, song.name);
+        }
+      } catch (chatError) {
+        // No fallar la compra si el chat no se puede crear
+        console.warn('No se pudo crear el chat automáticamente:', chatError);
+      }
 
       onSuccess(response.message);
       onClose();
