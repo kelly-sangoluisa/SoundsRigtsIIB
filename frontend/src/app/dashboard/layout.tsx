@@ -24,6 +24,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: '🏠' },
     { name: 'Mis Canciones', href: '/dashboard/artist/songs', icon: '🎵' },
+    { name: 'Explorar Música', href: '/dashboard/buyer/explore', icon: '🔍' },
     { name: 'Configuración', href: '/dashboard/settings', icon: '⚙️' },
   ];
 
