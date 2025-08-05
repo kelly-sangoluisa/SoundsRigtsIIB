@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Public } from '../auth/public.decorator';
 
 class UpdateUserDto {
   username?: string;
@@ -12,6 +13,7 @@ class UpdateUserDto {
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Public()
   @Get()
   findAll() {
     return this.usersService.findAll();
