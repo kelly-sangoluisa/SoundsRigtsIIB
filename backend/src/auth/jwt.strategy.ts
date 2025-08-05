@@ -4,6 +4,20 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 
+export interface JwtPayload {
+  sub: number;
+  username: string;
+  email: string;
+  iat?: number;
+  exp?: number;
+}
+
+export interface AuthenticatedUser {
+  userId: number;
+  username: string;
+  email: string;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
@@ -17,11 +31,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any) {
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     const user = await this.usersService.findOne(payload.sub);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Usuario no encontrado');
     }
-    return { userId: payload.sub, username: payload.username, email: payload.email };
+    
+    return { 
+      userId: payload.sub, 
+      username: payload.username, 
+      email: payload.email 
+    };
   }
 }
