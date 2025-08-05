@@ -23,8 +23,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: '🏠' },
-    { name: 'Mis Canciones', href: '/dashboard/artist/songs', icon: '🎵' },
-    { name: 'Explorar Música', href: '/dashboard/buyer/explore', icon: '🔍' },
+    // Rutas específicas para artistas
+    ...(user?.role === 'artist' ? [
+      { name: 'Mis Canciones', href: '/dashboard/artist/songs', icon: '🎵' },
+      { name: 'Licencias Vendidas', href: '/dashboard/artist/licenses', icon: '📄' },
+    ] : []),
+    // Rutas específicas para compradores
+    ...(user?.role === 'buyer' ? [
+      { name: 'Explorar Música', href: '/dashboard/buyer/explore', icon: '🔍' },
+      { name: 'Mis Licencias', href: '/dashboard/buyer/licenses', icon: '📋' },
+    ] : []),
     { name: 'Configuración', href: '/dashboard/settings', icon: '⚙️' },
   ];
 
