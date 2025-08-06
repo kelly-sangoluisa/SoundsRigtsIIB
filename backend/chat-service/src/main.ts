@@ -4,13 +4,17 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
+  // Configuración CORS
   app.enableCors({
-    origin: true,
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3004',
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
-  const port = process.env.PORT || 3003;
-  await app.listen(port);
-  console.log(`Chat Service running on port ${port}`);
+  await app.listen(3003);
 }
 bootstrap();

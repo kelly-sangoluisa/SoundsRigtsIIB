@@ -16,13 +16,37 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
 
+  console.log('🏠 [DashboardLayout] Estado actual:', {
+    pathname,
+    isLoading,
+    isAuthenticated,
+    hasUser: !!user,
+    userId: user?.id,
+    username: user?.username,
+    timestamp: new Date().toISOString()
+  });
+
   useEffect(() => {
+    console.log('🔄 [DashboardLayout] useEffect ejecutado:', {
+      isLoading,
+      isAuthenticated,
+      shouldRedirect: !isLoading && !isAuthenticated
+    });
+    
     if (!isLoading && !isAuthenticated) {
+      console.log('🚨 [DashboardLayout] Usuario no autenticado, redirigiendo a /login...');
       router.push('/login');
+    } else if (!isLoading && isAuthenticated && user) {
+      console.log('✅ [DashboardLayout] Usuario autenticado correctamente:', {
+        userId: user.id,
+        username: user.username,
+        email: user.email
+      });
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router, user]);
 
   if (isLoading) {
+    console.log('⏳ [DashboardLayout] Mostrando spinner de carga...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -31,6 +55,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   if (!isAuthenticated) {
+    console.log('❌ [DashboardLayout] Mostrando mensaje de redirección...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
@@ -39,6 +64,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
     );
   }
+
+  console.log('🎯 [DashboardLayout] Renderizando dashboard completo para usuario:', user);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: '🏠' },

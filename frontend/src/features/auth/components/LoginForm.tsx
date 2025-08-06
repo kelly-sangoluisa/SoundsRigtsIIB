@@ -10,14 +10,19 @@ export const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📝 [LoginForm] Formulario enviado:', { email, hasPassword: !!password });
     
     if (!email || !password) {
+      console.warn('⚠️ [LoginForm] Campos vacíos, no enviando formulario');
       return;
     }
 
     try {
+      console.log('🚀 [LoginForm] Llamando a login hook...');
       await login({ email, password });
+      console.log('✅ [LoginForm] Login hook completado exitosamente');
     } catch (error) {
+      console.error('💥 [LoginForm] Error en login hook:', error);
       // Error ya manejado en el hook
     }
   };

@@ -8,6 +8,36 @@ import { useChats } from '@/shared/hooks/useChats';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
+// Componente de debug de autenticación
+const AuthDebugInfo = () => {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
+  
+  return (
+    <div className="mb-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg border">
+      <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+        🔍 Debug - Estado de Autenticación
+      </h3>
+      <div className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+        <div><strong>isLoading:</strong> {isLoading ? 'true' : 'false'}</div>
+        <div><strong>isAuthenticated:</strong> {isAuthenticated ? 'true' : 'false'}</div>
+        <div><strong>hasUser:</strong> {user ? 'true' : 'false'}</div>
+        {user && (
+          <>
+            <div><strong>userId:</strong> {user.id}</div>
+            <div><strong>username:</strong> {user.username}</div>
+            <div><strong>email:</strong> {user.email}</div>
+          </>
+        )}
+        <div><strong>timestamp:</strong> {new Date().toISOString()}</div>
+      </div>
+    </div>
+  );
+};
+
 // Funciones helper para reducir complejidad
 const getStatusBadge = (status: string) => {
   if (status === 'available') return 'bg-green-100 text-green-800';
@@ -249,6 +279,9 @@ export default function DashboardPage() {
   return (
     <RouteGuard>
       <div className="space-y-8">
+        {/* Información de debug */}
+        <AuthDebugInfo />
+        
         {/* Bienvenida */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">

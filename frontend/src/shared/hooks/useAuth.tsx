@@ -28,29 +28,50 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshAuth = () => {
+    console.log('🔄 [useAuth] Ejecutando refreshAuth...');
     const authenticated = isAuthenticated();
+    console.log('🔍 [useAuth] Estado de autenticación:', { authenticated });
     
     if (authenticated) {
       const userInfo = getUserFromToken();
+      console.log('👤 [useAuth] Información de usuario obtenida:', userInfo);
       setUser(userInfo);
       setIsAuthenticatedState(true);
     } else {
+      console.log('❌ [useAuth] Usuario no autenticado, limpiando estado');
       setUser(null);
       setIsAuthenticatedState(false);
     }
     
+    console.log('✅ [useAuth] refreshAuth completado, isLoading = false');
     setIsLoading(false);
   };
 
   useEffect(() => {
+    console.log('🚀 [useAuth] AuthProvider montado, ejecutando refreshAuth inicial');
     refreshAuth();
   }, []);
 
   const handleLogin = (token: string) => {
+    console.log('🎯 [useAuth] handleLogin ejecutado con token:', { 
+      hasToken: !!token,
+      tokenLength: token?.length || 0 
+    });
+    
     tokenStorage.set(token);
+    console.log('💾 [useAuth] Token guardado en storage');
+    
     const userInfo = getUserFromToken(token);
+    console.log('👤 [useAuth] Información de usuario extraída del token:', userInfo);
+    
     setUser(userInfo);
     setIsAuthenticatedState(true);
+    
+    console.log('✅ [useAuth] Estado de autenticación actualizado:', {
+      isAuthenticated: true,
+      userId: userInfo?.id,
+      username: userInfo?.username
+    });
   };
 
   const handleLogout = () => {

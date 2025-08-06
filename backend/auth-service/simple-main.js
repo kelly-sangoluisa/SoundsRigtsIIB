@@ -1,9 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Configuración JWT
+const JWT_SECRET = process.env.JWT_SECRET || 'NGMwOWJkMjgtZTk5YS00ZDVhLThjMWEtOWZmN2I1MjE3ZWE0MzYwN2M4NzktNTA5NC00ZmMzLTk2NTEtODQwOWU5NGU4NTg5';
 
 app.use(cors());
 app.use(express.json());
@@ -17,15 +21,20 @@ const pool = new Pool({
   port: 5432,
 });
 
-// Función para extraer userId del token
+// Función para extraer userId del token JWT
 function getUserIdFromToken(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
   const token = authHeader.split(' ')[1];
-  const userIdMatch = token.match(/jwt-token-(\d+)-/);
-  return userIdMatch ? parseInt(userIdMatch[1]) : null;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return decoded.userId || decoded.sub;
+  } catch (error) {
+    console.log('Token verification failed:', error.message);
+    return null;
+  }
 }
 
 // Health check con verificación de BD
@@ -80,8 +89,14 @@ app.post('/auth/register', async (req, res) => {
     const newUserResult = await pool.query(insertUserQuery, [username, email, password]);
     const newUser = newUserResult.rows[0];
 
-    // Generar token simple
-    const token = `jwt-token-${newUser.id}-${Date.now()}`;
+    // Generar token JWT real
+    const payload = {
+      userId: newUser.id,
+      email: newUser.email,
+      username: newUser.username,
+      sub: newUser.id.toString()
+    };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
 
     res.status(201).json({
       message: 'Usuario registrado exitosamente',
@@ -126,8 +141,14 @@ app.post('/auth/login', async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // Generar token simple
-    const token = `jwt-token-${user.id}-${Date.now()}`;
+    // Generar token JWT real
+    const payload = {
+      userId: user.id,
+      email: user.email,
+      username: user.username,
+      sub: user.id.toString()
+    };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
 
     res.json({
       message: 'Login exitoso',
