@@ -66,12 +66,19 @@ CREATE TRIGGER update_songs_updated_at BEFORE UPDATE ON songs
 
 -- Insertar datos de prueba
 INSERT INTO users (username, email, password) VALUES 
-('admin', 'admin@example.com', '$2b$10$8eJ1q8ZqY4vNzGHu6.1Q9.xQK1YLQz3qK2vXyKqZ1YLQ3qK2vXyK'),
-('usuario1', 'usuario1@example.com', '$2b$10$8eJ1q8ZqY4vNzGHu6.1Q9.xQK1YLQz3qK2vXyKqZ1YLQ3qK2vXyK');
+('admin', 'admin@soundsrights.com', 'admin123'),
+('artist1', 'artist1@soundsrights.com', 'password123'),
+('buyer1', 'buyer1@soundsrights.com', 'password123'),
+('testuser', 'test@soundsrights.com', '123456'),
+('demo', 'demo@soundsrights.com', 'demo123')
+ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO songs (title, artist_id, genre, price, status) VALUES
 ('Echoes of Tomorrow', 1, 'electronic', 2.99, 'for_sale'),
-('Midnight Blues', 1, 'blues', 1.99, 'pending'),
-('Summer Vibes', 1, 'pop', 2.49, 'for_sale'),
-('Rock Anthem', 2, 'rock', 3.99, 'for_sale'),
-('Ocean Dreams', 2, 'classical', 4.99, 'pending');
+('Midnight Blues', 2, 'blues', 1.99, 'for_sale'),
+('Summer Vibes', 2, 'pop', 2.49, 'for_sale'),
+('Rock Anthem', 1, 'rock', 3.99, 'for_sale'),
+('Ocean Dreams', 2, 'ambient', 4.99, 'for_sale'),
+('Digital Pulse', 1, 'electronic', 1.49, 'for_sale'),
+('Jazz Nights', 2, 'jazz', 3.49, 'for_sale')
+ON CONFLICT DO NOTHING;
