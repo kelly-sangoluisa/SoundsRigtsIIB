@@ -64,13 +64,17 @@ export class SongsService {
 
       // API real
       console.log('🌐 [SongsService] Usando API real para getMySongs');
+      const { userId } = this.getUserFromToken();
+      
       const queryParams = new URLSearchParams();
+      queryParams.append('userId', userId); // Parámetro requerido por el backend
       if (filters?.genre) queryParams.append('genre', filters.genre);
       if (filters?.status) queryParams.append('status', filters.status);
       if (filters?.search) queryParams.append('search', filters.search);
 
-      const url = `${API_BASE_URL}/songs/mine${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const url = `${API_BASE_URL}/songs/mine?${queryParams.toString()}`;
       console.log('🔗 [SongsService] URL de la petición:', url);
+      console.log('👤 [SongsService] UserId enviado:', userId);
       
       const response = await fetch(url, {
         method: 'GET',
@@ -210,10 +214,20 @@ export class SongsService {
       }
 
       console.log('🌐 [SongsService] Usando API real para actualizar canción');
+      const { userId } = this.getUserFromToken();
+      
+      // Agregar artistId requerido por el backend
+      const updateData = {
+        ...songData,
+        artistId: parseInt(userId) || 1
+      };
+      
+      console.log('📝 [SongsService] Datos para actualizar con artistId:', updateData);
+      
       const response = await fetch(`${API_BASE_URL}/songs/${songId}`, {
         method: 'PUT',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify(songData),
+        body: JSON.stringify(updateData),
       });
 
       console.log('📡 [SongsService] Respuesta recibida:', { status: response.status, ok: response.ok });
@@ -249,7 +263,13 @@ export class SongsService {
       }
 
       console.log('🌐 [SongsService] Usando API real para eliminar canción');
-      const response = await fetch(`${API_BASE_URL}/songs/${songId}`, {
+      const { userId } = this.getUserFromToken();
+      
+      // Construir URL con userId como query parameter
+      const deleteUrl = `${API_BASE_URL}/songs/${songId}?userId=${userId}`;
+      console.log('🔗 [SongsService] URL de eliminación:', deleteUrl);
+      
+      const response = await fetch(deleteUrl, {
         method: 'DELETE',
         headers: this.getAuthHeaders(),
       });
