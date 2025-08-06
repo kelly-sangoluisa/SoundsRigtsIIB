@@ -3,12 +3,32 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface RegisterCredentials {
+  username: string;
+  email: string;
+  password: string;
+}
+
 export interface LoginResponse {
-  token: string;
+  message: string;
+  access_token: string;
   user: {
-    id: string;
+    id: number;
+    username: string;
     email: string;
-    name?: string;
+    created_at?: string;
+    updated_at?: string;
+  };
+}
+
+export interface RegisterResponse {
+  message: string;
+  access_token: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    created_at: string;
   };
 }
 

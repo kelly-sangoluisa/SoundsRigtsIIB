@@ -49,14 +49,7 @@ export const MESSAGE_TYPE = {
   SYSTEM: 'system',
 } as const;
 
-// Roles de usuario
-export const USER_ROLES = {
-  ARTIST: 'artist',
-  BUYER: 'buyer',
-  ADMIN: 'admin',
-} as const;
-
-// Modos de aplicación
+// Modos de aplicación (solo para UI)
 export const APP_MODES = {
   ARTIST: 'artist',
   BUYER: 'buyer',

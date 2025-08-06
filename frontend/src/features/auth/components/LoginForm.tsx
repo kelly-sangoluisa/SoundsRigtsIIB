@@ -39,9 +39,9 @@ export const LoginForm = () => {
               🧪 Credenciales de prueba:
             </p>
             <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-              <div><strong>Admin:</strong> admin@test.com / 123456</div>
-              <div><strong>Usuario:</strong> user@test.com / password</div>
-              <div><strong>Demo:</strong> demo@demo.com / demo</div>
+              <div><strong>Admin:</strong> admin@soundsrights.com / admin123</div>
+              <div><strong>Demo:</strong> demo@soundsrights.com / demo123</div>
+              <div><strong>Artista:</strong> artist@soundsrights.com / artist123</div>
             </div>
           </div>
         </div>
@@ -106,6 +106,15 @@ export const LoginForm = () => {
                 'Iniciar Sesión'
               )}
             </button>
+          </div>
+          
+          <div className="text-center">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              ¿No tienes cuenta?{' '}
+              <a href="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                Regístrate aquí
+              </a>
+            </span>
           </div>
         </form>
       </div>

@@ -67,10 +67,10 @@ export const getUserFromToken = (token?: string) => {
 
   const payload = decodeJWT(userToken);
   return payload ? {
-    id: payload.sub || payload.id,
+    id: parseInt(payload.sub || payload.id) || payload.id,
     email: payload.email,
-    name: payload.name,
-    role: payload.role
+    username: payload.username || payload.name,
+    name: payload.name
   } : null;
 };
 

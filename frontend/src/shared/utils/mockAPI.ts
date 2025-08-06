@@ -5,21 +5,21 @@ const mockUsers = [
     email: 'admin@test.com',
     password: '123456',
     name: 'Administrador',
-    role: 'admin'
+    username: 'admin'
   },
   {
     id: '2', 
     email: 'user@test.com',
     password: 'password',
     name: 'Usuario Normal',
-    role: 'user'
+    username: 'user'
   },
   {
     id: '3',
     email: 'demo@demo.com',
     password: 'demo',
     name: 'Usuario Demo',
-    role: 'user'
+    username: 'demo'
   }
 ];
 
@@ -31,7 +31,7 @@ const generateMockJWT = (user: typeof mockUsers[0]) => {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role,
+    username: user.username,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 horas
   }));
@@ -59,7 +59,7 @@ export const mockAuthAPI = {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role
+        username: user.username
       }
     };
   },

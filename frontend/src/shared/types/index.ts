@@ -5,7 +5,7 @@ import {
   CHAT_STATUS, 
   MESSAGE_STATUS, 
   MESSAGE_TYPE, 
-  USER_ROLES, 
+  APP_MODES,
   MUSIC_GENRES 
 } from '../constants';
 
@@ -16,20 +16,20 @@ export type LicenseType = typeof LICENSE_TYPES[keyof typeof LICENSE_TYPES];
 export type ChatStatus = typeof CHAT_STATUS[keyof typeof CHAT_STATUS];
 export type MessageStatus = typeof MESSAGE_STATUS[keyof typeof MESSAGE_STATUS];
 export type MessageType = typeof MESSAGE_TYPE[keyof typeof MESSAGE_TYPE];
-export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
+export type AppMode = typeof APP_MODES[keyof typeof APP_MODES];
 export type MusicGenre = typeof MUSIC_GENRES[keyof typeof MUSIC_GENRES];
 
 // Usuario
 export interface User {
-  id: string;
+  id: number;
+  username: string;
   email: string;
-  name?: string;
-  role: UserRole;
+  created_at?: string;
+  updated_at?: string;
   avatar?: string;
   bio?: string;
-  joinedAt: string;
   lastActivity?: string;
-  isActive: boolean;
+  isActive?: boolean;
   preferences?: UserPreferences;
   stats?: UserStats;
 }
@@ -356,7 +356,6 @@ export interface RegisterForm {
   password: string;
   confirmPassword: string;
   name?: string;
-  role: UserRole;
 }
 
 export interface SongForm {

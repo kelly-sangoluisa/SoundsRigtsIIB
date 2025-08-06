@@ -5,10 +5,10 @@ import { getUserFromToken, isAuthenticated, logout as utilLogout } from '@/share
 import { tokenStorage } from '@/shared/utils/tokenStorage';
 
 interface User {
-  id: string;
+  id: number;
   email: string;
+  username: string;
   name?: string;
-  role?: string;
 }
 
 interface AuthContextType {

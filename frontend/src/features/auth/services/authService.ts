@@ -1,8 +1,6 @@
-import { LoginCredentials, LoginResponse } from '../types';
-import { mockAuthAPI } from '@/shared/utils/mockAPI';
+import { LoginCredentials, LoginResponse, RegisterCredentials, RegisterResponse } from '../types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true' || true; // Usar mock por defecto
 
 class AuthError extends Error {
   constructor(message: string, public code?: string) {
@@ -14,12 +12,6 @@ class AuthError extends Error {
 export class AuthService {
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      if (USE_MOCK_API) {
-        // Usar API simulada
-        return await mockAuthAPI.login(credentials.email, credentials.password);
-      }
-      
-      // API real (cuando esté disponible)
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -31,9 +23,36 @@ export class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new AuthError(data.message || 'Error de autenticación');
+        throw new AuthError(data.error || data.message || 'Error de autenticación');
       }
 
+      // El backend devuelve la estructura directamente
+      return data;
+    } catch (error) {
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw new AuthError(error instanceof Error ? error.message : 'Error de conexión. Intenta nuevamente.');
+    }
+  }
+
+  static async register(credentials: RegisterCredentials): Promise<RegisterResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new AuthError(data.error || data.message || 'Error en el registro');
+      }
+
+      // El backend devuelve la estructura directamente
       return data;
     } catch (error) {
       if (error instanceof AuthError) {
@@ -45,13 +64,7 @@ export class AuthService {
 
   static async validateToken(token: string): Promise<boolean> {
     try {
-      if (USE_MOCK_API) {
-        // Usar validación simulada
-        return await mockAuthAPI.validateToken(token);
-      }
-      
-      // API real (cuando esté disponible)
-      const response = await fetch(`${API_BASE_URL}/auth/validate`, {
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -61,6 +74,25 @@ export class AuthService {
       return response.ok;
     } catch {
       return false;
+    }
+  }
+
+  static async getProfile(token: string) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Token inválido');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw new AuthError(error instanceof Error ? error.message : 'Error al obtener perfil');
     }
   }
 }
