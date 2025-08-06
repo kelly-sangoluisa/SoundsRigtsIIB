@@ -18,7 +18,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', service: 'api-gateway', port: 3000 });
+  res.json({ status: 'OK', service: 'api-gateway', port: 3100 });
 });
 
 app.get('/api/status', (req, res) => {
@@ -112,10 +112,133 @@ app.get('/auth/profile', async (req, res) => {
   }
 });
 
-// PROXY PARA SONGS SERVICE
+// PROXY PARA SONGS SERVICE CON RUTAS COMPLETAS
+// Canciones disponibles para comprar
+app.get('/api/v1/songs/available', async (req, res) => {
+  try {
+    const response = await fetch('http://songs-service:3002/songs/available');
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Error conectando con songs service', fallback: { total: 0, songs: [] } });
+  }
+});
+
+// Mis canciones (requiere autenticación)
+app.get('/api/v1/songs/mine', async (req, res) => {
+  try {
+    const userId = req.headers['user-id'] || '1';
+    const response = await fetch(`http://songs-service:3002/songs/mine?userId=${userId}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Error conectando con songs service', fallback: { total: 0, songs: [] } });
+  }
+});
+
+// Crear nueva canción
+app.post('/api/v1/songs', async (req, res) => {
+  try {
+    const userId = req.headers['user-id'] || '1';
+    const response = await fetch('http://songs-service:3002/songs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...req.body, userId })
+    });
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Error conectando con songs service' });
+  }
+});
+
+// Editar canción
+app.put('/api/v1/songs/:id', async (req, res) => {
+  try {
+    const response = await fetch(`http://songs-service:3002/songs/${req.params.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Error conectando con songs service' });
+  }
+});
+
+// Eliminar canción
+app.delete('/api/v1/songs/:id', async (req, res) => {
+  try {
+    const response = await fetch(`http://songs-service:3002/songs/${req.params.id}`, {
+      method: 'DELETE'
+    });
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Error conectando con songs service' });
+  }
+});
+
+// Comprar licencia de canción
+app.post('/api/v1/songs/:id/purchase', async (req, res) => {
+  try {
+    const userId = req.headers['user-id'] || '1';
+    const response = await fetch(`http://songs-service:3002/songs/${req.params.id}/purchase`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId })
+    });
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Error conectando con songs service' });
+  }
+});
+
+// Cambiar estado de canción (vender/quitar de venta)
+app.patch('/api/v1/songs/:id/status', async (req, res) => {
+  try {
+    const response = await fetch(`http://songs-service:3002/songs/${req.params.id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Error conectando con songs service' });
+  }
+});
+
+// Licencias compradas por el usuario
+app.get('/api/v1/licenses/purchased', async (req, res) => {
+  try {
+    const userId = req.headers['user-id'] || '1';
+    const response = await fetch(`http://songs-service:3002/licenses/purchased?userId=${userId}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Error conectando con songs service', fallback: { licenses: [] } });
+  }
+});
+
+// Licencias vendidas por el usuario
+app.get('/api/v1/licenses/sold', async (req, res) => {
+  try {
+    const userId = req.headers['user-id'] || '1';
+    const response = await fetch(`http://songs-service:3002/licenses/sold?userId=${userId}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: 'Error conectando con songs service', fallback: { licenses: [] } });
+  }
+});
+
+// Ruta legacy para compatibilidad
 app.get('/api/songs', async (req, res) => {
   try {
-    const response = await fetch('http://songs-service:3002/api/songs');
+    const response = await fetch('http://songs-service:3002/songs/available');
     const data = await response.json();
     res.json(data);
   } catch (error) {
@@ -134,7 +257,7 @@ app.get('/api/chats', async (req, res) => {
   }
 });
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3100;
 app.listen(port, () => {
   console.log(`API Gateway running on port ${port}`);
 });

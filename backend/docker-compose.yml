@@ -1,108 +1,71 @@
 version: '3.8'
 
 services:
-  # Base de datos PostgreSQL
   postgres:
-    image: postgres:15
+    image: postgres:15-alpine
     container_name: soundsrights-postgres
-    environment:
-      POSTGRES_DB: soundsrights
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
     ports:
       - "5432:5432"
+    environment:
+      - POSTGRES_DB=soundsrights
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin123
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - soundsrights-network
 
-  # API Gateway
   api-gateway:
-    build:
-      context: .
-      dockerfile: ./api-gateway/Dockerfile
+    build: 
+      context: ./api-gateway
+      dockerfile: Dockerfile-basic
     container_name: soundsrights-gateway
     ports:
-      - "3000:3000"
+      - "3100:3100"
     environment:
-      - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_USER=admin
-      - DATABASE_PASSWORD=admin123
-      - DATABASE_NAME=soundsrights
-      - JWT_SECRET=NGMwOWJkMjgtZTk5YS00ZDVhLThjMWEtOWZmN2I1MjE3ZWE0MzYwN2M4NzktNTA5NC00ZmMzLTk2NTEtODQwOWU5NGU4NTg5
-      - AUTH_SERVICE_HOST=auth-service
-      - AUTH_SERVICE_PORT=3001
-      - SONGS_SERVICE_HOST=songs-service
-      - SONGS_SERVICE_PORT=3002
-      - CHAT_SERVICE_HOST=chat-service
-      - CHAT_SERVICE_PORT=3003
+      - PORT=3100
     depends_on:
       - postgres
-      - auth-service
-      - songs-service
-      - chat-service
     networks:
       - soundsrights-network
 
-  # Auth Service
   auth-service:
-    build:
-      context: .
-      dockerfile: ./auth-service/Dockerfile
+    build: 
+      context: ./auth-service
+      dockerfile: Dockerfile-basic
     container_name: soundsrights-auth
     ports:
       - "3001:3001"
     environment:
-      - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_USER=admin
-      - DATABASE_PASSWORD=admin123
-      - DATABASE_NAME=soundsrights
-      - JWT_SECRET=NGMwOWJkMjgtZTk5YS00ZDVhLThjMWEtOWZmN2I1MjE3ZWE0MzYwN2M4NzktNTA5NC00ZmMzLTk2NTEtODQwOWU5NGU4NTg5
       - PORT=3001
     depends_on:
       - postgres
     networks:
       - soundsrights-network
 
-  # Songs Service (incluye licencias)
   songs-service:
-    build:
-      context: .
-      dockerfile: ./songs-service/Dockerfile
+    build: 
+      context: ./songs-service
+      dockerfile: Dockerfile-basic
     container_name: soundsrights-songs
     ports:
       - "3002:3002"
     environment:
-      - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_USER=admin
-      - DATABASE_PASSWORD=admin123
-      - DATABASE_NAME=soundsrights
-      - JWT_SECRET=NGMwOWJkMjgtZTk5YS00ZDVhLThjMWEtOWZmN2I1MjE3ZWE0MzYwN2M4NzktNTA5NC00ZmMzLTk2NTEtODQwOWU5NGU4NTg5
       - PORT=3002
     depends_on:
       - postgres
     networks:
       - soundsrights-network
 
-  # Chat Service
   chat-service:
-    build:
-      context: .
-      dockerfile: ./chat-service/Dockerfile
+    build: 
+      context: ./chat-service
+      dockerfile: Dockerfile-basic
     container_name: soundsrights-chat
     ports:
       - "3003:3003"
     environment:
-      - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_USER=admin
-      - DATABASE_PASSWORD=admin123
-      - DATABASE_NAME=soundsrights
-      - JWT_SECRET=NGMwOWJkMjgtZTk5YS00ZDVhLThjMWEtOWZmN2I1MjE3ZWE0MzYwN2M4NzktNTA5NC00ZmMzLTk2NTEtODQwOWU5NGU4NTg5
       - PORT=3003
     depends_on:
       - postgres

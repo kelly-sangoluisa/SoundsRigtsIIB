@@ -20,14 +20,21 @@ export class SongsService {
           throw new Error('Failed to fetch songs');
         }
         
-        return response.json();
+        const data = await response.json();
+        
+        // Asegurar que siempre devuelva un formato consistente
+        return {
+          songs: data.songs || [],
+          total: data.total || 0,
+          message: data.message || (data.songs?.length === 0 ? 'No tienes canciones aún' : undefined)
+        };
       },
       async () => {
         // Fallback para canciones
         return {
           songs: [],
           total: 0,
-          message: 'Songs service temporarily unavailable'
+          message: 'Songs service temporarily unavailable - Servicio de canciones temporalmente no disponible'
         };
       }
     );
@@ -47,13 +54,20 @@ export class SongsService {
           throw new Error('Failed to fetch available songs');
         }
         
-        return response.json();
+        const data = await response.json();
+        
+        // Asegurar formato consistente
+        return {
+          songs: data.songs || [],
+          total: data.total || 0,
+          message: data.message || (data.songs?.length === 0 ? 'No hay canciones disponibles con estos filtros' : undefined)
+        };
       },
       async () => {
         return {
           songs: [],
           total: 0,
-          message: 'Songs service temporarily unavailable'
+          message: 'Songs service temporarily unavailable - Servicio de canciones temporalmente no disponible'
         };
       }
     );
@@ -168,12 +182,17 @@ export class SongsService {
           throw new Error('Failed to fetch purchased licenses');
         }
         
-        return response.json();
+        const data = await response.json();
+        
+        return {
+          licenses: data.licenses || [],
+          message: data.message || (data.licenses?.length === 0 ? 'No has comprado licencias aún' : undefined)
+        };
       },
       async () => {
         return {
           licenses: [],
-          message: 'Licenses service temporarily unavailable'
+          message: 'Licenses service temporarily unavailable - Servicio de licencias temporalmente no disponible'
         };
       }
     );
@@ -192,12 +211,41 @@ export class SongsService {
           throw new Error('Failed to fetch sold licenses');
         }
         
-        return response.json();
+        const data = await response.json();
+        
+        return {
+          licenses: data.licenses || [],
+          message: data.message || (data.licenses?.length === 0 ? 'No has vendido licencias aún' : undefined)
+        };
       },
       async () => {
         return {
           licenses: [],
-          message: 'Licenses service temporarily unavailable'
+          message: 'Licenses service temporarily unavailable - Servicio de licencias temporalmente no disponible'
+        };
+      }
+    );
+  }
+
+  async updateSongStatus(id: string, statusData: any, userId: string) {
+    return this.circuitBreaker.execute(
+      'songs-service',
+      async () => {
+        const response = await fetch(`${this.songsServiceUrl}/songs/${id}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...statusData, artistId: userId }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to update song status');
+        }
+        
+        return response.json();
+      },
+      async () => {
+        return {
+          message: 'Song status update service temporarily unavailable'
         };
       }
     );

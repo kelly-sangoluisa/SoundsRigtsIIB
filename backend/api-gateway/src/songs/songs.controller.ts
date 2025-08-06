@@ -96,4 +96,14 @@ export class SongsController {
   async getSoldLicenses(@Request() req) {
     return this.songsService.getSoldLicenses(req.user.userId);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/status')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cambiar estado de canción' })
+  @ApiParam({ name: 'id', description: 'ID de la canción' })
+  @ApiResponse({ status: 200, description: 'Estado de canción actualizado' })
+  async updateSongStatus(@Param('id') id: string, @Body() statusData: any, @Request() req) {
+    return this.songsService.updateSongStatus(id, statusData, req.user.userId);
+  }
 }
