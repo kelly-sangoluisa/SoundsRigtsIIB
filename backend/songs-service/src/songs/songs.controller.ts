@@ -1,42 +1,101 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { SongsService } from './songs.service';
+import { CreateSongDto } from './dto/create-song.dto';
+import { UpdateSongDto } from './dto/update-song.dto';
+import { RequestSongDto, AcceptSongRequestDto, RejectSongRequestDto } from './dto/purchase-song.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('songs')
 export class SongsController {
   constructor(private readonly songsService: SongsService) {}
 
-  @Get('mine')
-  async getMySongs(@Query('userId') userId: string) {
-    return this.songsService.getMySongs(parseInt(userId));
-  }
-
-  @Get('available')
-  async getAvailableSongs(@Query() filters: any) {
-    return this.songsService.getAvailableSongs(filters);
-  }
-
   @Post()
-  async createSong(@Body() songData: any) {
-    return this.songsService.createSong(songData);
+  @UseGuards(JwtAuthGuard)
+  create(@Body() createSongDto: CreateSongDto) {
+    return this.songsService.create(createSongDto);
   }
 
-  @Put(':id')
-  async updateSong(@Param('id') id: string, @Body() songData: any) {
-    return this.songsService.updateSong(parseInt(id), songData);
+  @Get()
+  findAll() {
+    return this.songsService.findAll();
   }
 
-  @Delete(':id')
-  async deleteSong(@Param('id') id: string, @Query('userId') userId: string) {
-    return this.songsService.deleteSong(parseInt(id), parseInt(userId));
+  @Get('search')
+  search(@Query('q') query: string) {
+    return this.songsService.searchSongs(query);
+  }
+
+  @Get('genre/:genre')
+  findByGenre(@Param('genre') genre: string) {
+    return this.songsService.findByGenre(genre);
+  }
+
+  @Get('owner/:ownerId')
+  @UseGuards(JwtAuthGuard)
+  findByOwner(@Param('ownerId') ownerId: string) {
+    return this.songsService.findByOwner(ownerId);
   }
 
   @Get(':id')
-  async getSong(@Param('id') id: string) {
-    return this.songsService.getSong(parseInt(id));
+  findOne(@Param('id') id: string) {
+    return this.songsService.findOne(id);
   }
 
-  @Post(':id/purchase')
-  async purchaseSong(@Param('id') id: string, @Body() purchaseData: any) {
-    return this.songsService.purchaseSong(parseInt(id), purchaseData);
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  update(@Param('id') id: string, @Body() updateSongDto: UpdateSongDto) {
+    return this.songsService.update(id, updateSongDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id') id: string) {
+    return this.songsService.remove(id);
+  }
+
+  @Post(':id/play')
+  incrementPlayCount(@Param('id') id: string) {
+    return this.songsService.incrementPlayCount(id);
+  }
+
+  // Nuevos endpoints para compras
+  @Post('request')
+  @UseGuards(JwtAuthGuard)
+  requestSong(@Body() requestSongDto: RequestSongDto) {
+    return this.songsService.requestSong(requestSongDto);
+  }
+
+  @Post('accept-request')
+  @UseGuards(JwtAuthGuard)
+  acceptSongRequest(@Body() acceptSongRequestDto: AcceptSongRequestDto) {
+    return this.songsService.acceptSongRequest(acceptSongRequestDto);
+  }
+
+  @Post('reject-request')
+  @UseGuards(JwtAuthGuard)
+  rejectSongRequest(@Body() rejectSongRequestDto: RejectSongRequestDto) {
+    return this.songsService.rejectSongRequest(rejectSongRequestDto);
+  }
+
+  @Get('requests/:ownerId')
+  @UseGuards(JwtAuthGuard)
+  getRequestedSongs(@Param('ownerId') ownerId: string) {
+    return this.songsService.getRequestedSongs(ownerId);
+  }
+
+  @Get('purchased/:userId')
+  @UseGuards(JwtAuthGuard)
+  getPurchasedSongs(@Param('userId') userId: string) {
+    return this.songsService.getPurchasedSongs(userId);
   }
 }

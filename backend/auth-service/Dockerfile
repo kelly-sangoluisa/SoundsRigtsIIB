@@ -1,18 +1,20 @@
+# Usar imagen oficial de Node.js
 FROM node:18-alpine
 
-WORKDIR /app
+# Crear directorio de la aplicación
+WORKDIR /usr/src/app
 
-# Copiar package.json del auth service
-COPY package-simple.json ./package.json
+# Copiar archivos de dependencias
+COPY package*.json ./
 
-# Instalar dependencias
+# Instalar dependencias (incluyendo dev para desarrollo)
 RUN npm install
 
-# Copiar código del Auth Service
-COPY . ./
+# Copiar código fuente
+COPY . .
 
-# Exponer puerto
+# Exponer el puerto
 EXPOSE 3001
 
-# Comando para ejecutar directamente con ts-node
-CMD ["npx", "ts-node", "src/main.ts"]
+# Comando por defecto (puede ser sobrescrito en docker-compose)
+CMD ["npm", "run", "start:dev"]

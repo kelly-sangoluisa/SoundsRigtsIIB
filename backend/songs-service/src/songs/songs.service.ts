@@ -1,160 +1,192 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { SongRepository } from './repositories/song.repository';
-import { LicensesService } from '../licenses/licenses.service';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Song, SongDocument, SongStatus } from './schemas/song.schema';
+import { CreateSongDto } from './dto/create-song.dto';
+import { UpdateSongDto } from './dto/update-song.dto';
+import { RequestSongDto, AcceptSongRequestDto, RejectSongRequestDto } from './dto/purchase-song.dto';
 
 @Injectable()
 export class SongsService {
-  constructor(
-    private readonly songRepository: SongRepository,
-    private readonly licensesService: LicensesService,
-  ) {}
+  constructor(@InjectModel(Song.name) private songModel: Model<SongDocument>) {}
 
-  async getMySongs(artistId: number) {
-    const songs = await this.songRepository.findByArtist(artistId);
-    return {
-      songs: songs.map(song => ({
-        id: song.id,
-        name: song.title,
-        artist: song.artist.username,
-        genre: song.genre,
-        price: song.price,
-        status: song.status,
-        createdAt: song.created_at,
-        updatedAt: song.updated_at,
-        artistId: song.artist_id
-      })),
-      total: songs.length
-    };
-  }
-
-  async getAvailableSongs(filters: { genre?: string; maxPrice?: number; search?: string }) {
-    const songs = await this.songRepository.findAvailable(filters);
-    return {
-      songs: songs.map(song => ({
-        id: song.id,
-        name: song.title,
-        artist: song.artist.username,
-        genre: song.genre,
-        price: song.price,
-        status: song.status,
-        createdAt: song.created_at,
-        updatedAt: song.updated_at,
-        artistId: song.artist_id
-      })),
-      total: songs.length
-    };
-  }
-
-  async createSong(songData: { title: string; genre: string; price: number; artistId: number }) {
-    const song = await this.songRepository.create({
-      title: songData.title,
-      genre: songData.genre,
-      price: songData.price,
-      artist_id: songData.artistId,
-      status: 'for_sale'
+  async create(createSongDto: CreateSongDto): Promise<Song> {
+    const createdSong = new this.songModel({
+      ...createSongDto,
+      isAvailable: createSongDto.isAvailable ?? true,
+      currentOwnerId: createSongDto.ownerId, // Inicialmente el dueño actual es el mismo que el creador
+      status: SongStatus.AVAILABLE,
     });
-
-    return {
-      id: song.id,
-      name: song.title,
-      genre: song.genre,
-      price: song.price,
-      status: song.status,
-      createdAt: song.created_at,
-      updatedAt: song.updated_at,
-      artistId: song.artist_id
-    };
+    return createdSong.save();
   }
 
-  async updateSong(id: number, songData: { title?: string; genre?: string; price?: number; artistId: number }) {
-    const song = await this.songRepository.findById(id);
-    if (!song) {
-      throw new NotFoundException('Song not found');
-    }
-
-    if (song.artist_id !== songData.artistId) {
-      throw new ForbiddenException('You can only edit your own songs');
-    }
-
-    if (song.status === 'sold') {
-      throw new ForbiddenException('Cannot edit a sold song');
-    }
-
-    const updatedSong = await this.songRepository.update(id, {
-      title: songData.title,
-      genre: songData.genre,
-      price: songData.price
-    });
-
-    return {
-      id: updatedSong.id,
-      name: updatedSong.title,
-      genre: updatedSong.genre,
-      price: updatedSong.price,
-      status: updatedSong.status,
-      createdAt: updatedSong.created_at,
-      updatedAt: updatedSong.updated_at,
-      artistId: updatedSong.artist_id
-    };
+  async findAll(): Promise<Song[]> {
+    return this.songModel.find({ isAvailable: true }).exec();
   }
 
-  async deleteSong(id: number, artistId: number) {
-    const song = await this.songRepository.findById(id);
-    if (!song) {
-      throw new NotFoundException('Song not found');
-    }
-
-    if (song.artist_id !== artistId) {
-      throw new ForbiddenException('You can only delete your own songs');
-    }
-
-    if (song.status === 'sold') {
-      throw new ForbiddenException('Cannot delete a sold song');
-    }
-
-    await this.songRepository.delete(id);
-    return { message: 'Song deleted successfully' };
+  async findByOwner(ownerId: string): Promise<Song[]> {
+    return this.songModel.find({ ownerId }).exec();
   }
 
-  async getSong(id: number) {
-    const song = await this.songRepository.findById(id);
+  async findOne(id: string): Promise<Song> {
+    const song = await this.songModel.findById(id).exec();
     if (!song) {
-      throw new NotFoundException('Song not found');
+      throw new NotFoundException(`Song with ID ${id} not found`);
     }
-
-    return {
-      id: song.id,
-      name: song.title,
-      artist: song.artist.username,
-      genre: song.genre,
-      price: song.price,
-      status: song.status,
-      createdAt: song.created_at,
-      updatedAt: song.updated_at,
-      artistId: song.artist_id
-    };
+    return song;
   }
 
-  async purchaseSong(songId: number, purchaseData: { buyerId: number; buyerMessage?: string; offerPrice?: number }) {
-    const song = await this.songRepository.findById(songId);
+  async update(id: string, updateSongDto: UpdateSongDto): Promise<Song> {
+    const updatedSong = await this.songModel
+      .findByIdAndUpdate(id, updateSongDto, { new: true })
+      .exec();
+    
+    if (!updatedSong) {
+      throw new NotFoundException(`Song with ID ${id} not found`);
+    }
+    return updatedSong;
+  }
+
+  async remove(id: string): Promise<void> {
+    const result = await this.songModel.findByIdAndDelete(id).exec();
+    if (!result) {
+      throw new NotFoundException(`Song with ID ${id} not found`);
+    }
+  }
+
+  async searchSongs(query: string): Promise<Song[]> {
+    return this.songModel
+      .find({
+        isAvailable: true,
+        $or: [
+          { title: { $regex: query, $options: 'i' } },
+          { artist: { $regex: query, $options: 'i' } },
+          { genre: { $regex: query, $options: 'i' } },
+          { tags: { $in: [new RegExp(query, 'i')] } },
+        ],
+      })
+      .exec();
+  }
+
+  async findByGenre(genre: string): Promise<Song[]> {
+    return this.songModel
+      .find({ genre: { $regex: genre, $options: 'i' }, isAvailable: true })
+      .exec();
+  }
+
+  async incrementPlayCount(id: string): Promise<Song> {
+    const updatedSong = await this.songModel
+      .findByIdAndUpdate(id, { $inc: { playCount: 1 } }, { new: true })
+      .exec();
+    
+    if (!updatedSong) {
+      throw new NotFoundException(`Song with ID ${id} not found`);
+    }
+    return updatedSong;
+  }
+
+  // Nuevos métodos para compras
+  async requestSong(requestSongDto: RequestSongDto): Promise<Song> {
+    const { songId, requesterId } = requestSongDto;
+    
+    const song = await this.songModel.findById(songId).exec();
     if (!song) {
-      throw new NotFoundException('Song not found');
+      throw new NotFoundException(`Song with ID ${songId} not found`);
     }
 
-    if (song.status !== 'for_sale') {
-      throw new ForbiddenException('Song is not available for purchase');
+    if (song.currentOwnerId === requesterId) {
+      throw new BadRequestException('Cannot request your own song');
     }
 
-    // Cambiar estado a pending
-    await this.songRepository.updateStatus(songId, 'pending');
+    if (song.status !== SongStatus.AVAILABLE) {
+      throw new BadRequestException('Song is not available for purchase');
+    }
 
-    // Crear licencia
-    return this.licensesService.createLicense({
-      songId,
-      buyerId: purchaseData.buyerId,
-      sellerId: song.artist_id,
-      offerPrice: purchaseData.offerPrice || song.price,
-      message: purchaseData.buyerMessage
-    });
+    const updatedSong = await this.songModel
+      .findByIdAndUpdate(
+        songId,
+        {
+          status: SongStatus.REQUESTED,
+          requestedById: requesterId,
+          requestedAt: new Date(),
+        },
+        { new: true }
+      )
+      .exec();
+
+    return updatedSong;
+  }
+
+  async acceptSongRequest(acceptSongRequestDto: AcceptSongRequestDto): Promise<Song> {
+    const { songId, newOwnerId } = acceptSongRequestDto;
+    
+    const song = await this.songModel.findById(songId).exec();
+    if (!song) {
+      throw new NotFoundException(`Song with ID ${songId} not found`);
+    }
+
+    if (song.status !== SongStatus.REQUESTED) {
+      throw new BadRequestException('Song has no pending request');
+    }
+
+    const updatedSong = await this.songModel
+      .findByIdAndUpdate(
+        songId,
+        {
+          status: SongStatus.SOLD,
+          currentOwnerId: newOwnerId,
+          requestedById: undefined,
+          requestedAt: undefined,
+        },
+        { new: true }
+      )
+      .exec();
+
+    return updatedSong;
+  }
+
+  async rejectSongRequest(rejectSongRequestDto: RejectSongRequestDto): Promise<Song> {
+    const { songId } = rejectSongRequestDto;
+    
+    const song = await this.songModel.findById(songId).exec();
+    if (!song) {
+      throw new NotFoundException(`Song with ID ${songId} not found`);
+    }
+
+    if (song.status !== SongStatus.REQUESTED) {
+      throw new BadRequestException('Song has no pending request');
+    }
+
+    const updatedSong = await this.songModel
+      .findByIdAndUpdate(
+        songId,
+        {
+          status: SongStatus.AVAILABLE,
+          requestedById: undefined,
+          requestedAt: undefined,
+        },
+        { new: true }
+      )
+      .exec();
+
+    return updatedSong;
+  }
+
+  async getRequestedSongs(ownerId: string): Promise<Song[]> {
+    return this.songModel
+      .find({ 
+        currentOwnerId: ownerId, 
+        status: SongStatus.REQUESTED 
+      })
+      .exec();
+  }
+
+  async getPurchasedSongs(userId: string): Promise<Song[]> {
+    return this.songModel
+      .find({ 
+        currentOwnerId: userId,
+        ownerId: { $ne: userId } // Canciones que no creó pero que ahora posee
+      })
+      .exec();
   }
 }

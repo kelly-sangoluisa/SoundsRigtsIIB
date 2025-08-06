@@ -1,98 +1,62 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
-import { UserRepository } from './repositories/user.repository';
+import { UsersService } from '../users/users.service';
+import { CreateUserDto, LoginUserDto } from '../users/dto/user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userRepository: UserRepository,
-    private readonly jwtService: JwtService,
+    private usersService: UsersService,
+    private jwtService: JwtService,
   ) {}
 
-  async register(username: string, email: string, password: string) {
+  async validateUser(email: string, password: string): Promise<any> {
+    const user = await this.usersService.findOneByEmail(email);
+    if (user && await this.usersService.validatePassword(password, user.password)) {
+      const { password, ...result } = user.toObject();
+      return result;
+    }
+    return null;
+  }
+
+  async login(loginUserDto: LoginUserDto) {
+    const user = await this.validateUser(loginUserDto.email, loginUserDto.password);
+    if (!user) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+    
+    const payload = { email: user.email, sub: user._id, firstName: user.firstName };
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user._id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
+    };
+  }
+
+  async register(createUserDto: CreateUserDto) {
     // Verificar si el usuario ya existe
-    const existingUser = await this.userRepository.findByEmail(email);
+    const existingUser = await this.usersService.findOneByEmail(createUserDto.email);
     if (existingUser) {
-      throw new UnauthorizedException('Email already exists');
+      throw new ConflictException('El email ya está registrado');
     }
 
-    const existingUsername = await this.userRepository.findByUsername(username);
-    if (existingUsername) {
-      throw new UnauthorizedException('Username already exists');
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Crear usuario
-    const user = await this.userRepository.create({
-      username,
-      email,
-      password: hashedPassword,
-    });
-
-    // Generar token
-    const payload = { userId: user.id, email: user.email, username: user.username };
-    const token = this.jwtService.sign(payload);
-
+    const user = await this.usersService.create(createUserDto);
+    const userObj = user.toObject();
+    const { password, ...result } = userObj;
+    
+    const payload = { email: result.email, sub: result._id, firstName: result.firstName };
     return {
-      access_token: token,
+      access_token: this.jwtService.sign(payload),
       user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
+        id: result._id,
+        email: result.email,
+        firstName: result.firstName,
+        lastName: result.lastName,
       },
     };
-  }
-
-  async login(email: string, password: string) {
-    // Buscar usuario
-    const user = await this.userRepository.findByEmail(email);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Verificar password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    // Generar token
-    const payload = { userId: user.id, email: user.email, username: user.username };
-    const token = this.jwtService.sign(payload);
-
-    return {
-      access_token: token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      },
-    };
-  }
-
-  async getProfile(userId: number) {
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    return {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      created_at: user.created_at,
-    };
-  }
-
-  async validateToken(token: string) {
-    try {
-      const payload = this.jwtService.verify(token);
-      return { valid: true, user: payload };
-    } catch (error) {
-      throw new UnauthorizedException('Invalid token');
-    }
   }
 }

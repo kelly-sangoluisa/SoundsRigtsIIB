@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Base de datos MongoDB
+  mongo:
+    image: mongo:7.0
+    container_name: songrights-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: songrights123
+      MONGO_INITDB_DATABASE: songrights_auth
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - songrights-network
+
+  # Servicio de autenticación
+  auth-service:
+    build: .
+    container_name: songrights-auth-service
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - MONGODB_URI=mongodb://admin:songrights123@mongo:27017/songrights_auth?authSource=admin
+      - JWT_SECRET=spotify_secret_key_songrights_jwt_token_2025
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      - mongo
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - songrights-network
+    command: npm run start:dev
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  songrights-network:
+    driver: bridge

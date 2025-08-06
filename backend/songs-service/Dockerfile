@@ -2,17 +2,20 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copiar package.json del songs service
-COPY package-simple.json ./package.json
+# Copy package files
+COPY package*.json ./
 
-# Instalar dependencias
+# Install dependencies
 RUN npm install
 
-# Copiar código del Songs Service
-COPY . ./
+# Copy source code
+COPY . .
 
-# Exponer puerto
+# Build the application
+RUN npm run build
+
+# Expose port
 EXPOSE 3002
 
-# Comando para ejecutar directamente con ts-node
-CMD ["npx", "ts-node", "src/main.ts"]
+# Start the application
+CMD ["npm", "run", "start:dev"]

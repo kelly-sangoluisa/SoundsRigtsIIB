@@ -1,18 +1,17 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { SongsController } from './songs.controller';
+import { MongooseModule } from '@nestjs/mongoose';
 import { SongsService } from './songs.service';
-import { SongRepository } from './repositories/song.repository';
-import { Song } from './entities/song.entity';
-import { LicensesModule } from '../licenses/licenses.module';
+import { SongsController } from './songs.controller';
+import { Song, SongSchema } from './schemas/song.schema';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Song]),
-    LicensesModule
+    MongooseModule.forFeature([{ name: Song.name, schema: SongSchema }]),
+    AuthModule,
   ],
   controllers: [SongsController],
-  providers: [SongsService, SongRepository],
+  providers: [SongsService],
   exports: [SongsService],
 })
 export class SongsModule {}

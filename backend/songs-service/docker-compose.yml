@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  songs-service:
+    build: .
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - MONGODB_URI=mongodb://songs-mongo:27017/songs-db
+      - JWT_SECRET=spotify_secret_key_songrights_jwt_token_2025
+    depends_on:
+      - songs-mongo
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - songs-network
+    restart: unless-stopped
+
+  songs-mongo:
+    image: mongo:7.0
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=songs-db
+    volumes:
+      - songs_mongo_data:/data/db
+    networks:
+      - songs-network
+    restart: unless-stopped
+
+volumes:
+  songs_mongo_data:
+
+networks:
+  songs-network:
+    driver: bridge
