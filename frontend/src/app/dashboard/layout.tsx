@@ -1,11 +1,12 @@
 'use client';
 
 import { useAuth } from '@/shared/hooks/useAuth';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserProfileHeader } from '@/features/user';
+import { RoleSwitchButton } from '@/shared/components/RoleSwitchButton';
 
 interface DashboardLayoutProps {
   readonly children: ReactNode;
@@ -15,6 +16,24 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, logout, isLoading, isAuthenticated } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  
+  // Estado para el cambio de rol
+  const [currentMode, setCurrentMode] = useState<'artist' | 'buyer'>('artist');
+
+  const handleModeChange = (newMode: 'artist' | 'buyer') => {
+    console.log('🔄 [DashboardLayout] Cambiando modo:', { from: currentMode, to: newMode });
+    setCurrentMode(newMode);
+    // Aquí podrías persistir la preferencia en localStorage o en el backend
+    localStorage.setItem('userMode', newMode);
+  };
+
+  // Cargar el modo preferido del usuario al montar el componente
+  useEffect(() => {
+    const savedMode = localStorage.getItem('userMode') as 'artist' | 'buyer';
+    if (savedMode && (savedMode === 'artist' || savedMode === 'buyer')) {
+      setCurrentMode(savedMode);
+    }
+  }, []);
 
   console.log('🏠 [DashboardLayout] Estado actual:', {
     pathname,
@@ -67,14 +86,24 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   console.log('🎯 [DashboardLayout] Renderizando dashboard completo para usuario:', user);
 
-  const navigation = [
+  // Navegación dinámica según el modo
+  const artistNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: '🏠' },
     { name: 'Mis Canciones', href: '/dashboard/artist/songs', icon: '🎵' },
-    { name: 'Explorar Música', href: '/dashboard/buyer/explore', icon: '🔍' },
-    { name: 'Mis Licencias', href: '/dashboard/buyer/licenses', icon: '📋' },
+    { name: 'Licencias Vendidas', href: '/dashboard/artist/licenses', icon: '💰' },
     { name: 'Chat', href: '/dashboard/artist/chats', icon: '💬' },
     { name: 'Configuración', href: '/dashboard/settings', icon: '⚙️' },
   ];
+
+  const buyerNavigation = [
+    { name: 'Dashboard', href: '/dashboard', icon: '🏠' },
+    { name: 'Explorar Música', href: '/dashboard/buyer/explore', icon: '🔍' },
+    { name: 'Mis Licencias', href: '/dashboard/buyer/licenses', icon: '📋' },
+    { name: 'Chat', href: '/dashboard/buyer/chats', icon: '💬' },
+    { name: 'Configuración', href: '/dashboard/settings', icon: '⚙️' },
+  ];
+
+  const navigation = currentMode === 'artist' ? artistNavigation : buyerNavigation;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -84,14 +113,38 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Dashboard
+                Dashboard {currentMode === 'artist' ? '🎤' : '🛒'}
               </h1>
+            </div>
+            
+            {/* Centro - RoleSwitchButton */}
+            <div className="hidden md:flex items-center">
+              <RoleSwitchButton
+                currentMode={currentMode}
+                onModeChange={handleModeChange}
+                size="md"
+              />
             </div>
             
             {/* Usuario y logout */}
             <div className="flex items-center space-x-4">
               {user && (
                 <>
+                  <div className="hidden sm:flex items-center space-x-3">
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {user.username || user.email}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {currentMode === 'artist' ? '🎤 Artista' : '🛒 Comprador'}
+                      </p>
+                    </div>
+                    <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center">
+                      <span className="text-sm">
+                        {currentMode === 'artist' ? '🎤' : '🛒'}
+                      </span>
+                    </div>
+                  </div>
                   <UserProfileHeader userId={user.id.toString()} />
                   <button
                     onClick={logout}
@@ -102,6 +155,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </>
               )}
             </div>
+          </div>
+
+          {/* RoleSwitchButton para móvil */}
+          <div className="md:hidden pb-3 px-4">
+            <RoleSwitchButton
+              currentMode={currentMode}
+              onModeChange={handleModeChange}
+              size="sm"
+            />
           </div>
         </div>
       </header>
