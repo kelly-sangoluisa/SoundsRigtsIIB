@@ -37,18 +37,7 @@ export const LoginForm = () => {
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             Accede a tu cuenta
           </p>
-          
-          {/* Credenciales de prueba */}
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-              🧪 Credenciales de prueba:
-            </p>
-            <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-              <div><strong>Admin:</strong> admin@soundsrights.com / admin123</div>
-              <div><strong>Demo:</strong> demo@soundsrights.com / demo123</div>
-              <div><strong>Artista:</strong> artist@soundsrights.com / artist123</div>
-            </div>
-          </div>
+        
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
