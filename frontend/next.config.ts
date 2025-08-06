@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Removemos output: 'export' para permitir el uso de middleware
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  eslint: {
+    ignoreDuringBuilds: false,
+  }
 };
 
 export default nextConfig;

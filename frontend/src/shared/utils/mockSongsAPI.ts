@@ -1,4 +1,4 @@
-import { Song, SongsResponse, SongFilters, CreateSongRequest, UpdateSongRequest } from '@/features/songs/types';
+import { Song, SongsResponse, SongFilters, CreateSongRequest, UpdateSongRequest, ReservationInfo, AcceptSaleRequest, RejectSaleRequest } from '@/features/songs/types';
 
 // Datos simulados de canciones
 let mockSongs: Song[] = [
@@ -9,7 +9,7 @@ let mockSongs: Song[] = [
     genre: 'electronic',
     duration: 245, // 4:05
     price: 2.99,
-    status: 'published',
+    status: 'for_sale',
     url: '/audio/echoes-tomorrow.mp3',
     coverImage: '/images/covers/echoes.jpg',
     createdAt: '2024-01-15T10:00:00Z',
@@ -23,7 +23,7 @@ let mockSongs: Song[] = [
     genre: 'blues',
     duration: 198, // 3:18
     price: 1.99,
-    status: 'published',
+    status: 'reserved',
     url: '/audio/midnight-blues.mp3',
     coverImage: '/images/covers/midnight.jpg',
     createdAt: '2024-01-10T14:30:00Z',
@@ -51,7 +51,7 @@ let mockSongs: Song[] = [
     genre: 'rock',
     duration: 180, // 3:00
     price: 3.99,
-    status: 'published',
+    status: 'for_sale',
     url: '/audio/rock-anthem.mp3',
     coverImage: '/images/covers/rock.jpg',
     createdAt: '2024-01-20T11:20:00Z',
@@ -65,7 +65,7 @@ let mockSongs: Song[] = [
     genre: 'classical',
     duration: 320, // 5:20
     price: 4.99,
-    status: 'under_review',
+    status: 'reserved',
     url: '/audio/ocean-dreams.mp3',
     coverImage: '/images/covers/ocean.jpg',
     createdAt: '2024-02-05T09:30:00Z',
@@ -85,6 +85,32 @@ let mockSongs: Song[] = [
     createdAt: '2024-01-05T15:45:00Z',
     updatedAt: '2024-01-08T12:20:00Z',
     artistId: '2'
+  }
+];
+
+// Datos simulados de reservas
+let mockReservations: ReservationInfo[] = [
+  {
+    id: 'res-1',
+    songId: '2',
+    buyerId: 'buyer-1',
+    buyerName: 'Carlos García',
+    buyerEmail: 'carlos@example.com',
+    reservedAt: '2024-02-10T10:00:00Z',
+    expiresAt: '2024-02-17T10:00:00Z',
+    offerPrice: 1.99,
+    message: '¡Me encanta esta canción! Perfecta para mi playlist de blues.'
+  },
+  {
+    id: 'res-2',
+    songId: '5',
+    buyerId: 'buyer-2',
+    buyerName: 'María López',
+    buyerEmail: 'maria@example.com',
+    reservedAt: '2024-02-11T14:30:00Z',
+    expiresAt: '2024-02-18T14:30:00Z',
+    offerPrice: 4.50,
+    message: 'Música relajante perfecta para mi estudio. ¿Aceptarías $4.50?'
   }
 ];
 
@@ -190,6 +216,210 @@ export const mockSongsAPI = {
       
       return matchesGenre && matchesStatus && matchesSearch;
     });
+  },
+
+  // Obtener reservas por artista
+  getReservationsByArtist: async (artistId: string = '1'): Promise<ReservationInfo[]> => {
+    await delay(300);
+    
+    const artistSongs = mockSongs.filter(song => song.artistId === artistId);
+    const artistSongIds = artistSongs.map(song => song.id);
+    
+    return mockReservations.filter(reservation => 
+      artistSongIds.includes(reservation.songId)
+    );
+  },
+
+  // Aceptar venta
+  acceptSale: async (request: AcceptSaleRequest, artistId: string = '1'): Promise<Song> => {
+    await delay(600);
+    
+    const reservation = mockReservations.find(r => r.id === request.reservationId);
+    if (!reservation) {
+      throw new Error('Reserva no encontrada');
+    }
+
+    const songIndex = mockSongs.findIndex(song => 
+      song.id === reservation.songId && song.artistId === artistId
+    );
+    
+    if (songIndex === -1) {
+      throw new Error('Canción no encontrada o no tienes permisos');
+    }
+
+    // Actualizar canción a vendida
+    const updatedSong: Song = {
+      ...mockSongs[songIndex],
+      status: 'sold',
+      updatedAt: new Date().toISOString()
+    };
+    
+    mockSongs[songIndex] = updatedSong;
+    
+    // Remover la reserva
+    const reservationIndex = mockReservations.findIndex(r => r.id === request.reservationId);
+    if (reservationIndex !== -1) {
+      mockReservations.splice(reservationIndex, 1);
+    }
+    
+    return updatedSong;
+  },
+
+  // Rechazar venta
+  rejectSale: async (request: RejectSaleRequest, artistId: string = '1'): Promise<Song> => {
+    await delay(400);
+    
+    const reservation = mockReservations.find(r => r.id === request.reservationId);
+    if (!reservation) {
+      throw new Error('Reserva no encontrada');
+    }
+
+    const songIndex = mockSongs.findIndex(song => 
+      song.id === reservation.songId && song.artistId === artistId
+    );
+    
+    if (songIndex === -1) {
+      throw new Error('Canción no encontrada o no tienes permisos');
+    }
+
+    // Regresar canción a en venta
+    const updatedSong: Song = {
+      ...mockSongs[songIndex],
+      status: 'for_sale',
+      updatedAt: new Date().toISOString()
+    };
+    
+    mockSongs[songIndex] = updatedSong;
+    
+    // Remover la reserva
+    const reservationIndex = mockReservations.findIndex(r => r.id === request.reservationId);
+    if (reservationIndex !== -1) {
+      mockReservations.splice(reservationIndex, 1);
+    }
+    
+    return updatedSong;
+  },
+
+  // GET /songs/available - Obtener canciones disponibles para compra (modo comprador)
+  getAvailableSongs: async (filters?: { genre?: string; maxPrice?: number; search?: string }): Promise<{
+    songs: Song[];
+    total: number;
+  }> => {
+    await delay(400);
+    
+    let availableSongs = mockSongs.filter(song => 
+      song.status === 'published' || song.status === 'for_sale'
+    );
+    
+    // Aplicar filtros
+    if (filters?.genre) {
+      availableSongs = availableSongs.filter(song => song.genre === filters.genre);
+    }
+    
+    if (filters?.maxPrice && filters.maxPrice > 0) {
+      availableSongs = availableSongs.filter(song => song.price <= filters.maxPrice!);
+    }
+    
+    if (filters?.search) {
+      const searchLower = filters.search.toLowerCase();
+      availableSongs = availableSongs.filter(song => 
+        song.name.toLowerCase().includes(searchLower) ||
+        song.artist.toLowerCase().includes(searchLower) ||
+        song.genre.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    return {
+      songs: availableSongs,
+      total: availableSongs.length
+    };
+  },
+
+  // POST /licenses - Iniciar solicitud de compra (Task 9)
+  purchaseSong: async (request: {
+    songId: string;
+    buyerMessage?: string;
+    offerPrice?: number;
+    buyerId: string;
+    buyerName: string;
+    buyerEmail: string;
+  }): Promise<{
+    licenseId: string;
+    reservationId: string;
+    expiresAt: string;
+    message: string;
+  }> => {
+    await delay(800);
+    
+    const songIndex = mockSongs.findIndex(song => song.id === request.songId);
+    
+    if (songIndex === -1) {
+      throw new Error('Canción no encontrada');
+    }
+    
+    const song = mockSongs[songIndex];
+    
+    if (song.status !== 'published' && song.status !== 'for_sale') {
+      throw new Error('Esta canción no está disponible para compra');
+    }
+    
+    // Cambiar estado de la canción a reservada
+    const updatedSong: Song = {
+      ...song,
+      status: 'reserved',
+      updatedAt: new Date().toISOString()
+    };
+    
+    mockSongs[songIndex] = updatedSong;
+    
+    // Crear reserva
+    const reservationId = `res_${Date.now()}`;
+    const licenseId = `lic_${Date.now()}`;
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(); // 48 horas
+    
+    const newReservation: ReservationInfo = {
+      id: reservationId,
+      songId: request.songId,
+      buyerId: request.buyerId,
+      buyerName: request.buyerName,
+      buyerEmail: request.buyerEmail,
+      reservedAt: new Date().toISOString(),
+      expiresAt,
+      offerPrice: request.offerPrice || song.price,
+      message: request.buyerMessage || ''
+    };
+    
+    mockReservations.push(newReservation);
+    
+    return {
+      licenseId,
+      reservationId,
+      expiresAt,
+      message: 'Solicitud de compra enviada exitosamente. El artista tiene 48 horas para responder.'
+    };
+  },
+
+  // GET /songs/:id - Obtener canción por ID (alias para getSongById)
+  getSong: async (id: string, artistId: string = '1'): Promise<Song | null> => {
+    return mockSongsAPI.getSongById(id, artistId);
+  },
+
+  // PATCH /songs/:id/status - Actualizar estado de canción
+  updateSongStatus: async (id: string, status: Song['status'], artistId: string = '1'): Promise<Song> => {
+    await delay(300);
+    
+    const songIndex = mockSongs.findIndex(song => song.id === id && song.artistId === artistId);
+    if (songIndex === -1) {
+      throw new Error('Canción no encontrada');
+    }
+    
+    mockSongs[songIndex] = {
+      ...mockSongs[songIndex],
+      status,
+      updatedAt: new Date().toISOString()
+    };
+    
+    return mockSongs[songIndex];
   }
 };
 
@@ -206,7 +436,9 @@ export const getStatusLabel = (status: Song['status']): string => {
     published: 'Publicada',
     under_review: 'En Revisión',
     rejected: 'Rechazada',
-    sold: 'Vendida'
+    sold: 'Vendida',
+    reserved: 'Reservada',
+    for_sale: 'En Venta'
   };
   return labels[status];
 };
@@ -217,7 +449,13 @@ export const getStatusColor = (status: Song['status']): string => {
     published: 'bg-green-100 text-green-800',
     under_review: 'bg-yellow-100 text-yellow-800',
     rejected: 'bg-red-100 text-red-800',
-    sold: 'bg-blue-100 text-blue-800'
+    sold: 'bg-blue-100 text-blue-800',
+    reserved: 'bg-orange-100 text-orange-800',
+    for_sale: 'bg-purple-100 text-purple-800'
   };
   return colors[status];
+};
+
+export const getStatusText = (status: Song['status']): string => {
+  return getStatusLabel(status);
 };

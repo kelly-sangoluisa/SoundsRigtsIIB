@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useLogin } from '../hooks/useLogin';
+import { useLogin } from '@/shared/hooks/useLogin';
 
 export const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -11,17 +11,27 @@ export const LoginForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    debugger; // 🔍 Punto de debug A: Inicio del submit
+    console.log('🔍 Form submit:', { email, password });
+    
     if (!email || !password) {
+      console.log('🔍 Email or password missing');
       return;
     }
 
     try {
+      debugger; // 🔍 Punto de debug B: Antes de llamar login
+      console.log('🔍 Calling login function');
       await login({ email, password });
+      
+      debugger; // 🔍 Punto de debug C: Login exitoso
+      console.log('🔍 Login successful');
     } catch (error) {
+      debugger; // 🔍 Punto de debug D: Error en form
+      console.error('🔍 Login form error:', error);
       // Error ya manejado en el hook
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="max-w-md w-full space-y-8 p-8">

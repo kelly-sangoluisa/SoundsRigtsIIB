@@ -15,7 +15,7 @@ export interface Song {
 
 export type SongGenre = 'rock' | 'pop' | 'jazz' | 'classical' | 'electronic' | 'hip-hop' | 'reggae' | 'country' | 'blues' | 'folk';
 
-export type SongStatus = 'draft' | 'published' | 'under_review' | 'rejected' | 'sold';
+export type SongStatus = 'draft' | 'published' | 'under_review' | 'rejected' | 'sold' | 'reserved' | 'for_sale';
 
 export interface CreateSongRequest {
   name: string;
@@ -40,4 +40,26 @@ export interface SongFilters {
   genre?: SongGenre | '';
   status?: SongStatus | '';
   search?: string;
+}
+
+export interface ReservationInfo {
+  id: string;
+  songId: string;
+  buyerId: string;
+  buyerName: string;
+  buyerEmail: string;
+  reservedAt: string;
+  expiresAt: string;
+  offerPrice?: number;
+  message?: string;
+}
+
+export interface AcceptSaleRequest {
+  reservationId: string;
+  finalPrice?: number;
+}
+
+export interface RejectSaleRequest {
+  reservationId: string;
+  reason?: string;
 }
