@@ -1,0 +1,36 @@
+{
+  "name": "sounds-rights-backend",
+  "version": "1.0.0",
+  "description": "Microservices backend for SoundsRights music licensing platform",
+  "scripts": {
+    "install:all": "npm run install:gateway && npm run install:services",
+    "install:gateway": "cd api-gateway && npm install",
+    "install:services": "cd auth-service && npm install && cd ../songs-service && npm install && cd ../licenses-service && npm install && cd ../chat-service && npm install",
+    "dev:gateway": "cd api-gateway && npm run start:dev",
+    "dev:auth": "cd auth-service && npm run start:dev",
+    "dev:songs": "cd songs-service && npm run start:dev",
+    "dev:licenses": "cd licenses-service && npm run start:dev",
+    "dev:chat": "cd chat-service && npm run start:dev",
+    "build:all": "npm run build:gateway && npm run build:services",
+    "build:gateway": "cd api-gateway && npm run build",
+    "build:services": "cd auth-service && npm run build && cd ../songs-service && npm run build && cd ../licenses-service && npm run build && cd ../chat-service && npm run build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "db:migrate": "cd auth-service && npm run migration:run",
+    "db:seed": "cd auth-service && npm run db:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "workspaces": [
+    "api-gateway",
+    "auth-service", 
+    "songs-service",
+    "licenses-service",
+    "chat-service",
+    "shared"
+  ]
+}

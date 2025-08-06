@@ -1,0 +1,13 @@
+{
+  "name": "api-gateway",
+  "version": "1.0.0",
+  "description": "API Gateway microservice",
+  "main": "simple-main.js",
+  "scripts": {
+    "start": "node simple-main.js",
+    "start:dev": "node simple-main.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
