@@ -189,6 +189,20 @@ export function SongCard({
     </div>
   );
 }
+
+interface SongsListProps {
+  songs: Song[];
+  isLoading: boolean;
+  onDelete: (songId: string) => Promise<boolean>;
+  onEdit?: (song: Song) => void;
+  onRefresh: () => void;
+}
+
+export function SongsList({ songs, isLoading, onDelete, onEdit, onRefresh }: SongsListProps) {
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+
+  const handleDelete = async (songId: string, songName: string, status: Song['status']) => {
+    if (status === 'sold') {
       alert('No puedes eliminar una canción que ya fue vendida');
       return;
     }
@@ -206,6 +220,38 @@ export function SongCard({
       alert('Error al eliminar la canción. Inténtalo de nuevo.');
     } finally {
       setLoadingStates(prev => ({ ...prev, [songId]: false }));
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const getStatusColor = (status: Song['status']) => {
+    switch (status) {
+      case 'for_sale':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'sold':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusLabel = (status: Song['status']) => {
+    switch (status) {
+      case 'for_sale':
+        return 'En venta';
+      case 'pending':
+        return 'Pendiente';
+      case 'sold':
+        return 'Vendida';
+      default:
+        return 'Desconocido';
     }
   };
 
@@ -314,7 +360,7 @@ export function SongCard({
                   <div className="flex space-x-2">
                     {/* Botón Editar */}
                     <button
-                      onClick={() => onEdit(song)}
+                      onClick={() => onEdit?.(song)}
                       disabled={!canEditOrDelete(song.status) || loadingStates[song.id]}
                       className={`inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md transition-colors ${
                         canEditOrDelete(song.status)
@@ -328,7 +374,7 @@ export function SongCard({
 
                     {/* Botón Eliminar */}
                     <button
-                      onClick={() => handleDelete(song.id, song.name, song.status)}
+                      onClick={() => handleDelete(song.id.toString(), song.name, song.status)}
                       disabled={!canEditOrDelete(song.status) || loadingStates[song.id]}
                       className={`inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md transition-colors ${
                         canEditOrDelete(song.status)
