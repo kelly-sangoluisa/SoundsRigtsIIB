@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Song } from '../types';
-import { mockSongsAPI } from '@/shared/utils/mockSongsAPI';
+import { SongsService } from '../services/songsService';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 interface AvailableSongsFilters {
   genre?: string;
@@ -11,6 +12,7 @@ interface AvailableSongsFilters {
 }
 
 export const useAvailableSongs = () => {
+  const { user } = useAuth();
   const [songs, setSongs] = useState<Song[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -22,12 +24,31 @@ export const useAvailableSongs = () => {
       setIsLoading(true);
       setError('');
       
-      const filtersToUse = newFilters || filters;
-      const response = await mockSongsAPI.getAvailableSongs(filtersToUse);
+      console.log('📋 [useAvailableSongs] Cargando canciones disponibles...');
       
-      setSongs(response.songs);
-      setTotal(response.total);
+      const filtersToUse = newFilters || filters;
+      const response = await SongsService.getAvailableSongs(filtersToUse);
+      
+      console.log('✅ [useAvailableSongs] Canciones cargadas:', response);
+      
+      // Filtrar canciones que NO pertenezcan al usuario actual y que estén disponibles para compra
+      const userId = user?.id?.toString();
+      const availableSongs = response.songs.filter((song: Song) => 
+        song.status === 'for_sale' && 
+        song.artistId?.toString() !== userId
+      );
+      
+      console.log('🔍 [useAvailableSongs] Canciones filtradas para compra:', {
+        total: response.songs.length,
+        filtered: availableSongs.length,
+        userCanBuy: availableSongs.length,
+        userId
+      });
+      
+      setSongs(availableSongs);
+      setTotal(availableSongs.length);
     } catch (err: any) {
+      console.error('❌ [useAvailableSongs] Error:', err);
       setError(err.message || 'Error al cargar canciones');
       setSongs([]);
       setTotal(0);

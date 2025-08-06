@@ -18,7 +18,7 @@ export const PurchasedLicensesView = () => {
     refreshLicenses,
     clearError,
     downloadLicense
-  } = usePurchasedLicenses(user?.id || '');
+  } = usePurchasedLicenses();
 
   const handleRefresh = () => {
     clearError();

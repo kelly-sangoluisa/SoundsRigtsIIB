@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Song } from '../types';
 import { useAuth } from '@/shared/hooks/useAuth';
-import { mockSongsAPI } from '@/shared/utils/mockSongsAPI';
+import { SongsService } from '../services/songsService';
 import { useCreateChat } from '@/features/chat/hooks/useCreateChat';
 
 interface PurchaseModalProps {
@@ -36,19 +36,25 @@ export const PurchaseModal = ({ song, isOpen, onClose, onSuccess, onChatCreated 
     setError('');
 
     try {
-      // 1. Realizar la compra
-      const response = await mockSongsAPI.purchaseSong({
+      console.log('💰 [PurchaseModal] Iniciando compra:', {
         songId: song.id,
+        buyerId: user.id,
+        message: formData.message,
+        offerPrice: formData.offerPrice
+      });
+
+      // 1. Realizar la compra usando el servicio real
+      const response = await SongsService.purchaseSong(song.id, {
         buyerMessage: formData.message,
         offerPrice: formData.offerPrice,
-        buyerId: user.id,
-        buyerName: user.name || user.email,
-        buyerEmail: user.email
+        buyerId: user.id
       });
+
+      console.log('✅ [PurchaseModal] Compra exitosa:', response);
 
       // 2. Crear chat automáticamente (Task 14)
       try {
-        const newChat = await createChat(song.id, user.id, song.artistId || 'user_artist_1');
+        const newChat = await createChat(song.id, user.id.toString(), song.artistId?.toString() || 'user_artist_1');
         if (newChat && onChatCreated) {
           onChatCreated(newChat.id, song.name);
         }
@@ -57,9 +63,10 @@ export const PurchaseModal = ({ song, isOpen, onClose, onSuccess, onChatCreated 
         console.warn('No se pudo crear el chat automáticamente:', chatError);
       }
 
-      onSuccess(response.message);
+      onSuccess(response.message || '¡Compra realizada exitosamente!');
       onClose();
     } catch (err: any) {
+      console.error('❌ [PurchaseModal] Error en compra:', err);
       setError(err.message || 'Error al procesar la compra');
     } finally {
       setIsLoading(false);

@@ -1,8 +1,9 @@
 import { Song, SongsResponse, SongFilters, UpdateSongRequest } from '../types';
 import { mockSongsAPI } from '@/shared/utils/mockSongsAPI';
 import { tokenStorage } from '@/shared/utils/tokenStorage';
+import { LicensesService, PurchaseRequest, PurchaseResponse } from '@/features/licenses/services/LicensesService';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+const API_BASE_URL = process.env.NEXT_PUBLIC_SONGS_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
 const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true' || false;
 
 console.log('🔧 [SongsService] Configuración:', { API_BASE_URL, USE_MOCK_API });
@@ -92,6 +93,58 @@ export class SongsService {
       return result;
     } catch (error) {
       console.error('❌ [SongsService] Error en getMySongs:', error);
+      if (error instanceof SongsError) {
+        throw error;
+      }
+      throw new SongsError(error instanceof Error ? error.message : 'Error de conexión');
+    }
+  }
+
+  // Obtener canciones disponibles para compra
+  static async getAvailableSongs(filters?: SongFilters): Promise<SongsResponse> {
+    console.log('📋 [SongsService] Obteniendo canciones disponibles...', { filters, USE_MOCK_API });
+    
+    try {
+      if (USE_MOCK_API) {
+        console.log('🎭 [SongsService] Usando Mock API para getAvailableSongs');
+        const result = await mockSongsAPI.getAvailableSongs(filters || {});
+        console.log('✅ [SongsService] Mock API - Canciones disponibles obtenidas:', result);
+        return result;
+      }
+
+      // API real - usar el endpoint de canciones disponibles
+      console.log('🌐 [SongsService] Usando API real para obtener canciones disponibles');
+      
+      const queryParams = new URLSearchParams();
+      if (filters?.genre) queryParams.append('genre', filters.genre);
+      if (filters?.search) queryParams.append('search', filters.search);
+
+      const url = `${API_BASE_URL}/songs/available${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      console.log('🔗 [SongsService] URL de canciones disponibles:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: this.getAuthHeaders(),
+      });
+
+      console.log('📡 [SongsService] Respuesta recibida:', { status: response.status, ok: response.ok });
+
+      if (!response.ok) {
+        throw new SongsError('Error al obtener las canciones disponibles');
+      }
+
+      const result = await response.json();
+      console.log('✅ [SongsService] API real - Canciones disponibles obtenidas:', result);
+      
+      // Transformar el resultado para que coincida con SongsResponse
+      return {
+        songs: result.songs || [],
+        total: result.total || 0,
+        page: 1,
+        limit: 50
+      };
+    } catch (error) {
+      console.error('❌ [SongsService] Error en getAvailableSongs:', error);
       if (error instanceof SongsError) {
         throw error;
       }
@@ -324,6 +377,21 @@ export class SongsService {
         throw error;
       }
       throw new SongsError(error instanceof Error ? error.message : 'Error de conexión');
+    }
+  }
+
+  // Comprar una canción
+  static async purchaseSong(songId: string, purchaseData?: Partial<PurchaseRequest>): Promise<PurchaseResponse> {
+    console.log('💰 [SongsService] Comprando canción:', { songId, purchaseData });
+    
+    try {
+      // Usar el servicio de licencias para realizar la compra
+      const result = await LicensesService.purchaseSong(songId, purchaseData);
+      console.log('✅ [SongsService] Compra realizada exitosamente:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ [SongsService] Error en purchaseSong:', error);
+      throw error; // Re-lanzar el error del servicio de licencias
     }
   }
 }

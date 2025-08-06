@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { License, LicenseFilters } from '../types';
-import { mockLicensesAPI } from '../utils/mockLicensesAPI';
+import { LicensesService } from '../services/LicensesService';
 
-export const useSoldLicenses = (sellerId: string) => {
+export const useSoldLicenses = () => {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -12,18 +12,21 @@ export const useSoldLicenses = (sellerId: string) => {
   const [filters, setFilters] = useState<LicenseFilters>({});
 
   const loadLicenses = async (newFilters?: LicenseFilters) => {
-    if (!sellerId) return;
-    
     try {
       setIsLoading(true);
       setError('');
       
+      console.log('📋 [useSoldLicenses] Cargando licencias vendidas...');
+      
       const filtersToUse = newFilters || filters;
-      const response = await mockLicensesAPI.getSoldLicenses(sellerId, filtersToUse);
+      const response = await LicensesService.getSoldLicenses(filtersToUse);
+      
+      console.log('✅ [useSoldLicenses] Licencias cargadas:', response);
       
       setLicenses(response.licenses);
       setTotal(response.total);
     } catch (err: any) {
+      console.error('❌ [useSoldLicenses] Error:', err);
       setError(err.message || 'Error al cargar licencias');
       setLicenses([]);
       setTotal(0);
@@ -52,10 +55,8 @@ export const useSoldLicenses = (sellerId: string) => {
   };
 
   useEffect(() => {
-    if (sellerId) {
-      loadLicenses();
-    }
-  }, [sellerId]);
+    loadLicenses();
+  }, []);
 
   return {
     licenses,

@@ -18,23 +18,7 @@ const AuthDebugInfo = () => {
   }
   
   return (
-    <div className="mb-8 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg border">
-      <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-        🔍 Debug - Estado de Autenticación
-      </h3>
-      <div className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
-        <div><strong>isLoading:</strong> {isLoading ? 'true' : 'false'}</div>
-        <div><strong>isAuthenticated:</strong> {isAuthenticated ? 'true' : 'false'}</div>
-        <div><strong>hasUser:</strong> {user ? 'true' : 'false'}</div>
-        {user && (
-          <>
-            <div><strong>userId:</strong> {user.id}</div>
-            <div><strong>username:</strong> {user.username}</div>
-            <div><strong>email:</strong> {user.email}</div>
-          </>
-        )}
-        <div><strong>timestamp:</strong> {new Date().toISOString()}</div>
-      </div>
+    <div className="">
     </div>
   );
 };

@@ -17,7 +17,7 @@ export const SoldLicensesView = () => {
     clearFilters,
     refreshLicenses,
     clearError
-  } = useSoldLicenses(user?.id || '');
+  } = useSoldLicenses();
 
   const handleRefresh = () => {
     clearError();

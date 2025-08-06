@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { License, LicenseFilters } from '../types';
-import { mockLicensesAPI } from '../utils/mockLicensesAPI';
+import { LicensesService } from '../services/LicensesService';
 
-export const usePurchasedLicenses = (buyerId: string) => {
+export const usePurchasedLicenses = () => {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>('');
@@ -12,18 +12,21 @@ export const usePurchasedLicenses = (buyerId: string) => {
   const [filters, setFilters] = useState<LicenseFilters>({});
 
   const loadLicenses = async (newFilters?: LicenseFilters) => {
-    if (!buyerId) return;
-    
     try {
       setIsLoading(true);
       setError('');
       
+      console.log('📋 [usePurchasedLicenses] Cargando licencias compradas...');
+      
       const filtersToUse = newFilters || filters;
-      const response = await mockLicensesAPI.getPurchasedLicenses(buyerId, filtersToUse);
+      const response = await LicensesService.getPurchasedLicenses(filtersToUse);
+      
+      console.log('✅ [usePurchasedLicenses] Licencias cargadas:', response);
       
       setLicenses(response.licenses);
       setTotal(response.total);
     } catch (err: any) {
+      console.error('❌ [usePurchasedLicenses] Error:', err);
       setError(err.message || 'Error al cargar licencias');
       setLicenses([]);
       setTotal(0);
@@ -54,7 +57,11 @@ export const usePurchasedLicenses = (buyerId: string) => {
   const downloadLicense = async (licenseId: string): Promise<{ downloadUrl: string; fileName: string }> => {
     try {
       setError('');
-      return await mockLicensesAPI.downloadLicense(licenseId, buyerId);
+      // TODO: Implementar descarga real cuando esté disponible en el backend
+      return {
+        downloadUrl: `#download-${licenseId}`,
+        fileName: `license-${licenseId}.pdf`
+      };
     } catch (err: any) {
       setError(err.message || 'Error al descargar licencia');
       throw err;
@@ -62,10 +69,8 @@ export const usePurchasedLicenses = (buyerId: string) => {
   };
 
   useEffect(() => {
-    if (buyerId) {
-      loadLicenses();
-    }
-  }, [buyerId]);
+    loadLicenses();
+  }, []);
 
   return {
     licenses,
