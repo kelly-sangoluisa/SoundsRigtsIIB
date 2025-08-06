@@ -37,9 +37,6 @@ coverage/
 # Optional ESLint cache
 .eslintcache
 
-# Docker
-.dockerignore
-
 # IDE
 .vscode/
 .idea/

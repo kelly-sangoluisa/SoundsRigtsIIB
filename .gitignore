@@ -123,10 +123,6 @@ logs
 *.sqlite
 *.db
 
-# Docker
-Dockerfile
-docker-compose*.yml
-.dockerignore
 
 # OS generated files
 .DS_Store
