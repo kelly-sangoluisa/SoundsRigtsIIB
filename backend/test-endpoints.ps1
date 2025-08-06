@@ -4,31 +4,31 @@ Write-Host "🎵 Probando Backend SoundsRights" -ForegroundColor Green
 Write-Host "=================================" -ForegroundColor Green
 
 # URLs base
-$apiGateway = "http://localhost:3000"
+$apiGateway = "http://localhost:3100"
 $authService = "http://localhost:3001"
 $songsService = "http://localhost:3002"
 $chatService = "http://localhost:3003"
 
 Write-Host "`n📍 Endpoints Disponibles:" -ForegroundColor Yellow
 
-Write-Host "`n🔐 AUTENTICACIÓN (API Gateway - Puerto 3000)" -ForegroundColor Cyan
-Write-Host "POST $apiGateway/auth/login" -ForegroundColor White
-Write-Host "POST $apiGateway/auth/register" -ForegroundColor White
-Write-Host "GET  $apiGateway/auth/profile (requiere JWT)" -ForegroundColor White
-Write-Host "GET  $apiGateway/auth/validate (requiere JWT)" -ForegroundColor White
+Write-Host "`n🔐 AUTENTICACIÓN (API Gateway - Puerto 3100)" -ForegroundColor Cyan
+Write-Host "POST $apiGateway/api/v1/auth/login" -ForegroundColor White
+Write-Host "POST $apiGateway/api/v1/auth/register" -ForegroundColor White
+Write-Host "GET  $apiGateway/api/v1/auth/profile (requiere JWT)" -ForegroundColor White
+Write-Host "GET  $apiGateway/api/v1/auth/validate (requiere JWT)" -ForegroundColor White
 
-Write-Host "`n🎵 CANCIONES (API Gateway - Puerto 3000)" -ForegroundColor Cyan
-Write-Host "GET  $apiGateway/songs/available" -ForegroundColor White
-Write-Host "GET  $apiGateway/songs/mine (requiere JWT)" -ForegroundColor White
-Write-Host "POST $apiGateway/songs (requiere JWT)" -ForegroundColor White
-Write-Host "GET  $apiGateway/songs/:id" -ForegroundColor White
-Write-Host "PUT  $apiGateway/songs/:id (requiere JWT)" -ForegroundColor White
-Write-Host "DELETE $apiGateway/songs/:id (requiere JWT)" -ForegroundColor White
-Write-Host "POST $apiGateway/songs/:id/purchase (requiere JWT)" -ForegroundColor White
+Write-Host "`n🎵 CANCIONES (API Gateway - Puerto 3100)" -ForegroundColor Cyan
+Write-Host "GET  $apiGateway/api/v1/songs/available" -ForegroundColor White
+Write-Host "GET  $apiGateway/api/v1/songs/mine (requiere JWT)" -ForegroundColor White
+Write-Host "POST $apiGateway/api/v1/songs (requiere JWT)" -ForegroundColor White
+Write-Host "GET  $apiGateway/api/v1/songs/:id" -ForegroundColor White
+Write-Host "PUT  $apiGateway/api/v1/songs/:id (requiere JWT)" -ForegroundColor White
+Write-Host "DELETE $apiGateway/api/v1/songs/:id (requiere JWT)" -ForegroundColor White
+Write-Host "POST $apiGateway/api/v1/songs/:id/purchase (requiere JWT)" -ForegroundColor White
 
-Write-Host "`n📜 LICENCIAS (API Gateway - Puerto 3000)" -ForegroundColor Cyan
-Write-Host "GET  $apiGateway/songs/licenses/purchased (requiere JWT)" -ForegroundColor White
-Write-Host "GET  $apiGateway/songs/licenses/sold (requiere JWT)" -ForegroundColor White
+Write-Host "`n📜 LICENCIAS (API Gateway - Puerto 3100)" -ForegroundColor Cyan
+Write-Host "GET  $apiGateway/api/v1/songs/licenses/purchased (requiere JWT)" -ForegroundColor White
+Write-Host "GET  $apiGateway/api/v1/songs/licenses/sold (requiere JWT)" -ForegroundColor White
 
 Write-Host "`n💬 CHAT (API Gateway - Puerto 3000)" -ForegroundColor Cyan
 Write-Host "GET  $apiGateway/chat (requiere JWT)" -ForegroundColor White
@@ -94,7 +94,7 @@ $registerData = @{
     password = "password123"
 } | ConvertTo-Json
 
-$registerResult = Invoke-SafeRequest -Uri "$apiGateway/auth/register" -Method "POST" -Body $registerData
+$registerResult = Invoke-SafeRequest -Uri "$apiGateway/api/v1/auth/register" -Method "POST" -Body $registerData
 
 if ($registerResult.Success) {
     Write-Host "✅ Usuario registrado exitosamente" -ForegroundColor Green
@@ -109,7 +109,7 @@ if ($registerResult.Success) {
         password = "password123"
     } | ConvertTo-Json
     
-    $loginResult = Invoke-SafeRequest -Uri "$apiGateway/auth/login" -Method "POST" -Body $loginData
+    $loginResult = Invoke-SafeRequest -Uri "$apiGateway/api/v1/auth/login" -Method "POST" -Body $loginData
     
     if ($loginResult.Success -and $loginResult.Data.access_token) {
         Write-Host "✅ Login exitoso" -ForegroundColor Green
@@ -118,7 +118,7 @@ if ($registerResult.Success) {
         
         # 4. Probar obtener perfil
         Write-Host "`n4️⃣ Probando obtener perfil..." -ForegroundColor Yellow
-        $profileResult = Invoke-SafeRequest -Uri "$apiGateway/auth/profile" -Headers $headers
+        $profileResult = Invoke-SafeRequest -Uri "$apiGateway/api/v1/auth/profile" -Headers $headers
         
         if ($profileResult.Success) {
             Write-Host "✅ Perfil obtenido: $($profileResult.Data.username)" -ForegroundColor Green
@@ -128,7 +128,7 @@ if ($registerResult.Success) {
         
         # 5. Probar obtener canciones disponibles
         Write-Host "`n5️⃣ Probando obtener canciones disponibles..." -ForegroundColor Yellow
-        $songsResult = Invoke-SafeRequest -Uri "$apiGateway/songs/available"
+        $songsResult = Invoke-SafeRequest -Uri "$apiGateway/api/v1/songs/available"
         
         if ($songsResult.Success) {
             Write-Host "✅ Canciones disponibles: $($songsResult.Data.total)" -ForegroundColor Green
@@ -140,11 +140,15 @@ if ($registerResult.Success) {
         Write-Host "`n6️⃣ Probando crear canción..." -ForegroundColor Yellow
         $songData = @{
             title = "Canción de Prueba $(Get-Random)"
+            name = "Canción de Prueba $(Get-Random)"  
             genre = "rock"
             price = 9.99
+            duration = 180
         } | ConvertTo-Json
         
-        $createSongResult = Invoke-SafeRequest -Uri "$apiGateway/songs" -Method "POST" -Body $songData -Headers $headers
+        Write-Host "📝 Datos enviados: $songData" -ForegroundColor Gray
+        
+        $createSongResult = Invoke-SafeRequest -Uri "$apiGateway/api/v1/songs" -Method "POST" -Body $songData -Headers $headers
         
         if ($createSongResult.Success) {
             Write-Host "✅ Canción creada: $($createSongResult.Data.name)" -ForegroundColor Green
@@ -162,7 +166,7 @@ if ($registerResult.Success) {
 
 Write-Host "`n🎉 Pruebas completadas!" -ForegroundColor Green
 Write-Host "`n💡 Para usar la API:" -ForegroundColor Cyan
-Write-Host "1. Haz POST a /auth/register para crear una cuenta" -ForegroundColor White
-Write-Host "2. Haz POST a /auth/login para obtener un token JWT" -ForegroundColor White
+Write-Host "1. Haz POST a /api/v1/auth/register para crear una cuenta" -ForegroundColor White
+Write-Host "2. Haz POST a /api/v1/auth/login para obtener un token JWT" -ForegroundColor White
 Write-Host "3. Incluye el token en el header: Authorization: Bearer <token>" -ForegroundColor White
-Write-Host "4. Visita http://localhost:3000/api para ver la documentación completa" -ForegroundColor White
+Write-Host "4. Visita http://localhost:3100/api para ver la documentación completa" -ForegroundColor White

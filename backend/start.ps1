@@ -7,7 +7,7 @@ Write-Host "Building and starting services with Docker Compose..." -ForegroundCo
 docker-compose up --build
 
 Write-Host "Services are running!" -ForegroundColor Green
-Write-Host "API Gateway: http://localhost:3000" -ForegroundColor Yellow
+Write-Host "API Gateway: http://localhost:3100" -ForegroundColor Yellow
 Write-Host "Auth Service: http://localhost:3001" -ForegroundColor Yellow
 Write-Host "Songs Service: http://localhost:3002" -ForegroundColor Yellow
 Write-Host "Chat Service: http://localhost:3003" -ForegroundColor Yellow

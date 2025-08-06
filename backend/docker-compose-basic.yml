@@ -22,9 +22,9 @@ services:
       dockerfile: Dockerfile-basic
     container_name: soundsrights-gateway
     ports:
-      - "3000:3000"
+      - "3100:3100"
     environment:
-      - PORT=3000
+      - PORT=3100
     depends_on:
       - postgres
     networks:

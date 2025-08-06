@@ -2,8 +2,8 @@ import { Song, SongsResponse, SongFilters, UpdateSongRequest } from '../types';
 import { mockSongsAPI } from '@/shared/utils/mockSongsAPI';
 import { tokenStorage } from '@/shared/utils/tokenStorage';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100/api/v1';
-const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true' || true;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002';
+const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === 'true' || false;
 
 console.log('🔧 [SongsService] Configuración:', { API_BASE_URL, USE_MOCK_API });
 

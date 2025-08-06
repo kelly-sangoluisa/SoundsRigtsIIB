@@ -6,7 +6,7 @@ Una vez que levantes los servicios, podrás acceder a la documentación interact
 
 | Servicio | URL de Swagger | Puerto |
 |----------|----------------|--------|
-| **API Gateway** | http://localhost:3000/api | 3000 |
+| **API Gateway** | http://localhost:3100/api | 3100 |
 | **Auth Service** | http://localhost:3001/api | 3001 |
 | **Songs Service** | http://localhost:3002/api | 3002 |
 | **Chat Service** | http://localhost:3003/api | 3003 |
@@ -105,7 +105,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/songs" -Method POST -Body $songBod
 
 Verificar que los servicios estén funcionando:
 ```powershell
-curl http://localhost:3000/health  # API Gateway
+curl http://localhost:3100/health  # API Gateway
 curl http://localhost:3001/health  # Auth Service
 curl http://localhost:3002/health  # Songs Service  
 curl http://localhost:3003/health  # Chat Service

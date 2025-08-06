@@ -1,6 +1,6 @@
 import { LoginCredentials, LoginResponse, RegisterCredentials, RegisterResponse } from '../types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3100/api/v1';
 
 class AuthError extends Error {
   constructor(message: string, public code?: string) {

@@ -2,7 +2,7 @@
 
 Write-Host "🎫 Probando Endpoints de Licencias" -ForegroundColor Green
 
-$apiGateway = "http://localhost:3000"
+$apiGateway = "http://localhost:3100"
 
 # Primero necesitas hacer login para obtener el token
 Write-Host "`n1️⃣ Haz login primero:" -ForegroundColor Yellow
