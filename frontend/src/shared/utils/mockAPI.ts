@@ -42,18 +42,24 @@ const generateMockJWT = (user: typeof mockUsers[0]) => {
 
 export const mockAuthAPI = {
   login: async (email: string, password: string) => {
+    debugger; // 🔍 Punto de debug 5: Mock login iniciado
+    console.log('🔍 Mock login attempt:', { email, password });
+    
     // Simular delay de red
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     const user = mockUsers.find(u => u.email === email && u.password === password);
     
+    debugger; // 🔍 Punto de debug 6: Usuario encontrado o no
+    console.log('🔍 User found:', user);
+    
     if (!user) {
+      debugger; // 🔍 Punto de debug 7: Usuario no encontrado
       throw new Error('Credenciales inválidas');
     }
     
     const token = generateMockJWT(user);
-    
-    return {
+    const response = {
       token,
       user: {
         id: user.id,
@@ -62,24 +68,23 @@ export const mockAuthAPI = {
         role: user.role
       }
     };
-  },
-  
-  validateToken: async (token: string) => {
-    // Simular delay de red
-    await new Promise(resolve => setTimeout(resolve, 500));
     
-    try {
-      // Decodificar el payload del token
-      const parts = token.split('.');
-      if (parts.length !== 3) return false;
-      
-      const payload = JSON.parse(atob(parts[1]));
-      const currentTime = Math.floor(Date.now() / 1000);
-      
-      // Verificar que no haya expirado
-      return payload.exp > currentTime;
-    } catch {
-      return false;
-    }
+    debugger; // 🔍 Punto de debug 8: Respuesta exitosa
+    console.log('🔍 Mock login success:', response);
+    return response;
+  },
+
+  validateToken: async (token: string): Promise<boolean> => {
+    debugger; // 🔍 Punto de debug 9: Validando token
+    console.log('🔍 Validating token:', token);
+    
+    // Simular delay de validación
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // Validar que el token tenga el formato correcto de mock JWT
+    const isValid = typeof token === 'string' && token.startsWith('eyJ') && token.split('.').length === 3;
+    
+    console.log('🔍 Token validation result:', isValid);
+    return isValid;
   }
 };

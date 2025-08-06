@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from './useAuth';
-import { api } from '@/shared/lib/api';
+import { AuthService } from '@/features/auth/services/authService';
 
 interface LoginCredentials {
   email: string;
@@ -25,20 +25,45 @@ export const useLogin = () => {
   const router = useRouter();
 
   const login = async (credentials: LoginCredentials) => {
+    debugger; // 🔍 Punto de debug E: Inicio del hook login
+    console.log('🔍 useLogin hook - login called:', credentials);
+    
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await api.post<LoginResponse>('/auth/login', credentials);
+      debugger; // 🔍 Punto de debug F: Antes de llamar AuthService
+      console.log('🔍 useLogin hook - calling AuthService.login');
       
-      if (response.success && response.data) {
-        authLogin(response.data.token);
+      const response = await AuthService.login(credentials);
+      
+      debugger; // 🔍 Punto de debug G: Respuesta de AuthService
+      console.log('🔍 useLogin hook - AuthService response:', response);
+      
+      if (response && response.token) {
+        debugger; // 🔍 Punto de debug H: Antes de authLogin
+        console.log('🔍 useLogin hook - calling authLogin with token:', response.token);
+        
+        authLogin(response.token);
+        
+        debugger; // 🔍 Punto de debug I: Antes de redirigir
+        console.log('🔍 useLogin hook - redirecting to dashboard');
+        
         router.push('/dashboard');
       } else {
-        setError(response.error || 'Error al iniciar sesión');
+        debugger; // 🔍 Punto de debug J: Respuesta inválida
+        console.log('🔍 useLogin hook - invalid response:', response);
+        setError('Respuesta inválida del servidor');
       }
     } catch (err) {
-      setError('Error de conexión. Intenta nuevamente.');
+      debugger; // 🔍 Punto de debug K: Error en useLogin
+      console.error('🔍 useLogin hook - error:', err);
+      
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Error de conexión. Intenta nuevamente.');
+      }
     } finally {
       setIsLoading(false);
     }

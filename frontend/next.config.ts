@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-   output: 'export',
+  // Removemos output: 'export' para permitir el uso de middleware
   trailingSlash: true,
   images: {
     unoptimized: true
