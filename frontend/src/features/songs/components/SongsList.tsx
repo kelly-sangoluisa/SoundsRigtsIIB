@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Song } from '@/lib/api-client';
+import { Song } from '@/features/songs/types';
 
 interface SongCardProps {
   song: Song;
@@ -91,7 +91,7 @@ export function SongCard({
     switch (status) {
       case 'for_sale':
         return 'bg-green-100 text-green-800';
-      case 'pending':
+      case 'under_review':
         return 'bg-yellow-100 text-yellow-800';
       case 'sold':
         return 'bg-gray-100 text-gray-800';
@@ -104,7 +104,7 @@ export function SongCard({
     switch (status) {
       case 'for_sale':
         return 'En venta';
-      case 'pending':
+      case 'under_review':
         return 'Pendiente';
       case 'sold':
         return 'Vendida';
@@ -179,7 +179,7 @@ export function SongCard({
                   className="flex-1 bg-white border border-gray-300 rounded-md py-2 px-3 text-sm disabled:opacity-50"
                 >
                   <option value="for_sale">En venta</option>
-                  <option value="pending">Pendiente</option>
+                  <option value="under_review">Pendiente</option>
                 </select>
               </>
             )}
@@ -233,7 +233,7 @@ export function SongsList({ songs, isLoading, onDelete, onEdit, onRefresh }: Son
     switch (status) {
       case 'for_sale':
         return 'bg-green-100 text-green-800';
-      case 'pending':
+      case 'under_review':
         return 'bg-yellow-100 text-yellow-800';
       case 'sold':
         return 'bg-gray-100 text-gray-800';
@@ -246,7 +246,7 @@ export function SongsList({ songs, isLoading, onDelete, onEdit, onRefresh }: Son
     switch (status) {
       case 'for_sale':
         return 'En venta';
-      case 'pending':
+      case 'under_review':
         return 'Pendiente';
       case 'sold':
         return 'Vendida';

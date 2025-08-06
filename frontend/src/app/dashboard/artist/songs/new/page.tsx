@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { RouteGuard } from '@/shared/components/RouteGuard';
 import { SongForm } from '@/features/songs/components/SongForm';
 import { CreateSongRequest } from '@/features/songs/types';
-import { mockSongsAPI } from '@/shared/utils/mockSongsAPI';
+import { SongsService } from '@/features/songs/services/songsService';
 
 export default function NewSongPage() {
   const router = useRouter();
@@ -15,15 +15,36 @@ export default function NewSongPage() {
     setIsLoading(true);
     
     try {
-      await mockSongsAPI.createSong(songData, '1'); // Usar ID del usuario autenticado
+      console.log('🆕 [NewSongPage] Iniciando creación de canción:', songData);
+      
+      // Convertir el formato del frontend al formato que espera la API
+      const apiSongData = {
+        title: songData.name,
+        name: songData.name, // Para compatibilidad
+        genre: songData.genre,
+        price: songData.price,
+        duration: songData.duration,
+        url: songData.url
+      };
+      
+      console.log('📋 [NewSongPage] Datos convertidos para API:', apiSongData);
+      
+      const result = await SongsService.createSong(apiSongData);
+      
+      console.log('✅ [NewSongPage] Canción creada exitosamente:', result);
+      
+      // Mostrar notificación de éxito
+      alert('¡Canción creada exitosamente!');
       
       // Redirigir a la lista de canciones después de crear
       router.push('/dashboard/artist/songs');
       
-      // Podrías mostrar una notificación de éxito aquí
     } catch (error) {
-      console.error('Error al crear la canción:', error);
-      // Podrías mostrar una notificación de error aquí
+      console.error('❌ [NewSongPage] Error al crear la canción:', error);
+      
+      // Mostrar mensaje de error específico
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      alert(`Error al crear la canción: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }

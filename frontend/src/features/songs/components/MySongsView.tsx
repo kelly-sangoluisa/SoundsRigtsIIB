@@ -8,6 +8,7 @@ import { SongsFilters } from './SongsFilters';
 import { SongsList } from './SongsList';
 import { ReservationsList } from './ReservationsList';
 import { Song, ReservationInfo } from '../types';
+import { SongsService } from '../services/songsService';
 import { mockSongsAPI } from '@/shared/utils/mockSongsAPI';
 
 export const MySongsView = () => {
@@ -41,7 +42,7 @@ export const MySongsView = () => {
     
     try {
       setReservationsLoading(true);
-      const reservationsData = await mockSongsAPI.getReservationsByArtist(user.id);
+      const reservationsData = await mockSongsAPI.getReservationsByArtist(user.id.toString());
       setReservations(reservationsData);
     } catch (error: any) {
       setActionError(`Error al cargar reservas: ${error.message}`);
@@ -76,14 +77,37 @@ export const MySongsView = () => {
     router.push(`/dashboard/artist/songs/edit/${song.id}`);
   };
 
-  const handleDelete = async (songId: string) => {
+  const handleDelete = async (songId: string): Promise<boolean> => {
+    console.log('🗑️ [MySongsView] Iniciando eliminación de canción:', songId);
+    
     try {
       setActionError('');
-      await mockSongsAPI.deleteSong(songId, '1');
+      
+      // Confirmar eliminación
+      const confirm = window.confirm('¿Estás seguro de que quieres eliminar esta canción?');
+      if (!confirm) {
+        console.log('🚫 [MySongsView] Eliminación cancelada por el usuario');
+        return false;
+      }
+      
+      console.log('✅ [MySongsView] Usuario confirmó eliminación, procediendo...');
+      
+      await SongsService.deleteSong(songId);
+      
+      console.log('✅ [MySongsView] Canción eliminada exitosamente, refrescando lista...');
+      
       // Refrescar la lista después de eliminar
       refreshSongs();
+      
+      // Mostrar mensaje de éxito
+      alert('¡Canción eliminada exitosamente!');
+      return true;
     } catch (error: any) {
-      setActionError(error.message);
+      console.error('❌ [MySongsView] Error al eliminar canción:', error);
+      const errorMessage = error.message || 'Error desconocido al eliminar';
+      setActionError(`Error al eliminar la canción: ${errorMessage}`);
+      alert(`Error al eliminar la canción: ${errorMessage}`);
+      return false;
     }
   };
 

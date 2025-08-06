@@ -9,6 +9,7 @@ interface User {
   email: string;
   username: string;
   name?: string;
+  role?: 'artist' | 'buyer';
 }
 
 interface AuthContextType {
