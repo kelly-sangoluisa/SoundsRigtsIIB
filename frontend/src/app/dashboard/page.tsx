@@ -5,6 +5,7 @@ import { useAuth } from '@/shared/hooks/useAuth';
 import { useMySongs } from '@/shared/hooks/useSongs';
 import { useSoldLicenses } from '@/shared/hooks/useLicenses';
 import { useChats } from '@/shared/hooks/useChats';
+import Navigation from '@/components/Navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
@@ -102,7 +103,7 @@ const renderLicensesSection = (licenses: any[], loadingLicenses: boolean) => {
     );
   }
 
-  if (!licenses || licenses.length === 0) {
+  if (!licenses || !Array.isArray(licenses) || licenses.length === 0) {
     return (
       <p className="text-gray-500 text-center py-4">
         No tienes ventas aún. ¡Promociona tus canciones!
@@ -272,25 +273,33 @@ export default function DashboardPage() {
       href: '/dashboard/artist/chats',
       icon: '💬',
       color: 'bg-indigo-600 hover:bg-indigo-700',
-      badge: loadingChats ? '' : chats.filter(chat => chat.unreadCount > 0).length.toString(),
+      badge: loadingChats ? '' : (Array.isArray(chats) ? chats.filter(chat => chat.unreadCount > 0).length.toString() : '0'),
     },
   ];
 
   return (
     <RouteGuard>
-      <div className="space-y-8">
-        {/* Información de debug */}
-        <AuthDebugInfo />
-        
-        {/* Bienvenida */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            ¡Bienvenido de vuelta, {user?.name || user?.email}! 👋
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Este es tu panel de control donde puedes gestionar tus canciones y ver tus estadísticas.
-          </p>
-        </div>
+      <Navigation />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Información de debug */}
+          <AuthDebugInfo />
+          
+          {/* Bienvenida */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              ¡Bienvenido de vuelta, {user?.name || user?.email}! 👋
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Este es tu panel de control donde puedes gestionar tus canciones y ver tus estadísticas.
+            </p>
+            <Link 
+              href="/songs"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              🎵 Ir a Marketplace de Canciones
+            </Link>
+          </div>
 
         {/* Estadísticas del Artista */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -392,6 +401,7 @@ export default function DashboardPage() {
             </h3>
             {renderLicensesSection(licenses, loadingLicenses)}
           </div>
+        </div>
         </div>
       </div>
     </RouteGuard>

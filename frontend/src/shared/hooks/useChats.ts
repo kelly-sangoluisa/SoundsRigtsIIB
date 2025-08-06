@@ -49,11 +49,11 @@ export const useChats = (filters?: ChatFilters) => {
       const baseEndpoint = API_ROUTES.CHATS.LIST;
       const endpoint = query ? `${baseEndpoint}?${query}` : baseEndpoint;
       
-      const response = await api.get<Chat[]>(endpoint);
+      const response = await api.get<{ chats: Chat[] }>(endpoint);
       
       if (response.success && response.data) {
         setState({
-          data: response.data,
+          data: response.data.chats || [],
           isLoading: false,
           error: null,
         });

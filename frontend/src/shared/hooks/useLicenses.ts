@@ -131,11 +131,11 @@ export const usePurchasedLicenses = (filters?: Omit<LicenseFilters, 'buyerId'>) 
       const baseEndpoint = API_ROUTES.LICENSES.PURCHASED;
       const endpoint = query ? `${baseEndpoint}?${query}` : baseEndpoint;
       
-      const response = await api.get<License[]>(endpoint);
+      const response = await api.get<{ licenses: License[] }>(endpoint);
       
       if (response.success && response.data) {
         setState({
-          data: response.data,
+          data: response.data.licenses || [],
           isLoading: false,
           error: null,
         });
@@ -180,11 +180,11 @@ export const useSoldLicenses = (filters?: Omit<LicenseFilters, 'sellerId'>) => {
       const baseEndpoint = API_ROUTES.LICENSES.SOLD;
       const endpoint = query ? `${baseEndpoint}?${query}` : baseEndpoint;
       
-      const response = await api.get<License[]>(endpoint);
+      const response = await api.get<{ licenses: License[] }>(endpoint);
       
       if (response.success && response.data) {
         setState({
-          data: response.data,
+          data: response.data.licenses || [],
           isLoading: false,
           error: null,
         });

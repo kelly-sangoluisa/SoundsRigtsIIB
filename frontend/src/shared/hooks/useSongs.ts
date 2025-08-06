@@ -126,11 +126,11 @@ export const useMySongs = (filters?: Omit<SongFilters, 'artistId'>) => {
       const baseEndpoint = API_ROUTES.SONGS.MY_SONGS;
       const endpoint = query ? `${baseEndpoint}?${query}` : baseEndpoint;
       
-      const response = await api.get<Song[]>(endpoint);
+      const response = await api.get<{ songs: Song[] }>(endpoint);
       
       if (response.success && response.data) {
         setState({
-          data: response.data,
+          data: response.data.songs || [],
           isLoading: false,
           error: null,
         });
